@@ -27,6 +27,7 @@ uv run python experiments/run_depth_ablation.py
 echo ""
 echo "[4/6] Running clustering backend ablation..."
 uv run python experiments/run_backend_ablation.py
+python experiments/run_scalability_benchmark.py
 
 echo ""
 echo "[5/6] Generating LaTeX tables..."

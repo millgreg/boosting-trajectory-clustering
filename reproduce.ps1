@@ -20,6 +20,7 @@ uv run python experiments/run_depth_ablation.py
 
 Write-Host "`n[4/6] Running clustering backend ablation..."
 uv run python experiments/run_backend_ablation.py
+python experiments/run_scalability_benchmark.py
 
 Write-Host "`n[5/6] Generating LaTeX tables..."
 uv run python experiments/generate_tables.py
