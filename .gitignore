@@ -1,0 +1,49 @@
+# Ignore publication manuscript and generated documents
+paper/
+# Ignore legacy scripts and old scratch folders
+archive/
+scratch/
+# Python standard ignores
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.pytest_cache/
+# Jupyter Notebook ignores
+.ipynb_checkpoints
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+# Ignore large data files
+*.pkl
+*.gz
+*.h5
+*.csv
+data/tcga/BRCA_clinicalMatrix
+data/tcga_gbmlgg/GBMLGG_clinicalMatrix
+# Ignore internal documentation and drafts
+docs/
