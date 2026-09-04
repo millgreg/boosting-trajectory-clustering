@@ -5,8 +5,8 @@ import pandas as pd
 from sklearn.datasets import fetch_openml
 from sklearn.decomposition import TruncatedSVD
 
-LOCAL_DATASETS = ['brca', 'paul15', 'gbmlgg', 'ctg', 'mice']
-OPENML_DATASETS = ['dermatology', 'vehicle', 'segment', 'arrhythmia', 'leukemia', 'thyroid', 'diabetes', 'har']
+LOCAL_DATASETS = ['brca', 'paul15', 'gbmlgg', 'ctg', 'mice', 'diabetes']
+OPENML_DATASETS = ['dermatology', 'vehicle', 'segment', 'arrhythmia', 'leukemia', 'thyroid', 'har']
 ALL_DATASETS = LOCAL_DATASETS + OPENML_DATASETS
 
 def load_dataset(name, base_dir=None):
@@ -44,35 +44,6 @@ def load_dataset(name, base_dir=None):
         X_target = X_full[target_mask]
         subtypes = y_str[target_mask]
 
-    elif name == 'diabetes':
-        # Using a representative UCI diabetes dataset on OpenML
-        data = fetch_openml(data_id=4541, as_frame=True, parser='auto')
-        df = data.data.copy()
-        
-        # Subsample to keep computation tractable (match the paper's N=2000 target cohort)
-        rng = np.random.RandomState(42)
-        idx = rng.permutation(len(df))[:20000]
-        df = df.iloc[idx].reset_index(drop=True)
-        y_str = data.target.astype(str).values[idx]
-        
-        # Keep numeric and high-variance categorical features to match P=22
-        cols_to_keep = ['age', 'time_in_hospital', 'num_lab_procedures', 'num_procedures', 
-                        'num_medications', 'number_outpatient', 'number_emergency', 
-                        'number_inpatient', 'number_diagnoses', 'gender', 'race', 
-                        'insulin', 'metformin', 'glipizide', 'glyburide', 'pioglitazone', 'rosiglitazone']
-        df = df[[c for c in cols_to_keep if c in df.columns]]
-        X_full = pd.get_dummies(df, drop_first=True).values.astype(float)
-        X_full = np.nan_to_num(X_full)
-        
-        # Proxy task: Readmission
-        y_binary = (y_str != '<30').astype(int)
-        target_mask = (y_binary == 1)
-        X_target = X_full[target_mask]
-        
-        # Subtypes: Medication changes/profiles (proxied via clustering features for the benchmark)
-        # We assign 4 arbitrary subtypes based on admission type to simulate the 4 medical management classes
-        subtypes = np.random.RandomState(42).randint(0, 4, size=len(X_target))
-
     elif name == 'arrhythmia':
         data = fetch_openml('arrhythmia', version=1, parser='auto', as_frame=True)
         X_full = pd.get_dummies(data.data, drop_first=True).values.astype(float)
@@ -105,7 +76,6 @@ def load_dataset(name, base_dir=None):
         
     else:
         paths = {
-            'thyroid': os.path.join(base_dir, 'data', 'thyroid', 'thyroid_preprocessed.pkl'),
             'brca': os.path.join(base_dir, 'data', 'tcga', 'brca_preprocessed.pkl'),
             'paul15': os.path.join(base_dir, 'data', 'scrna', 'paul15_preprocessed.pkl'),
             'gbmlgg': os.path.join(base_dir, 'data', 'tcga_gbmlgg', 'gbmlgg_preprocessed.pkl'),

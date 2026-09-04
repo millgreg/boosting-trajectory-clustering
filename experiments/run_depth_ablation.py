@@ -10,7 +10,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from rtc.core import RTC
+from btc.core import BTC
 from experiments.dataset_loader import load_dataset
 
 N_SEEDS = 30
@@ -35,15 +35,15 @@ def run_seed(seed, name, X_full, y_binary, X_target, subtypes, k):
                 gb = GradientBoostingClassifier(n_estimators=100, max_depth=depth, max_features='sqrt', random_state=seed)
                 gb.fit(X_full, y_binary)
                 
-                rtc = RTC(booster=gb, n_clusters=k, representation='per_tree_delta', normalization='none', random_state=seed)
-                labels = rtc.fit_predict(X_target)
+                btc = BTC(booster=gb, n_clusters=k, representation='per_tree_delta', normalization='none', random_state=seed)
+                labels = btc.fit_predict(X_target)
             else:
                 # Auto-select simply means running a grid search or similar. 
                 # For simplicity here, we simulate it by using the best from an inner validation or just plotting the default 'Auto' which is depth=1 in our case since stump is best.
                 gb = GradientBoostingClassifier(n_estimators=100, max_depth=1, max_features='sqrt', random_state=seed)
                 gb.fit(X_full, y_binary)
-                rtc = RTC(booster=gb, n_clusters=k, representation='per_tree_delta', normalization='none', random_state=seed)
-                labels = rtc.fit_predict(X_target)
+                btc = BTC(booster=gb, n_clusters=k, representation='per_tree_delta', normalization='none', random_state=seed)
+                labels = btc.fit_predict(X_target)
                 
             ari = adjusted_rand_score(subtypes, labels)
         except Exception as e:

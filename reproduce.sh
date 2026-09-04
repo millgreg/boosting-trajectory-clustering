@@ -2,7 +2,7 @@
 set -e
 
 echo "================================================="
-echo " RTC: Reproducing All Paper Results and Figures  "
+echo " BTC: Reproducing All Paper Results and Figures  "
 echo "================================================="
 
 # Get absolute path to project root
@@ -13,7 +13,7 @@ export PYTHONPATH="$PROJECT_ROOT"
 mkdir -p experiments/results
 
 echo ""
-echo "[1/6] Running canonical benchmark (RTC vs RFC)..."
+echo "[1/6] Running canonical benchmark (BTC vs RFC)..."
 uv run python experiments/run_canonical_benchmark.py
 
 echo ""
@@ -25,9 +25,9 @@ echo "[3/6] Running depth ablation..."
 uv run python experiments/run_depth_ablation.py
 
 echo ""
-echo "[4/6] Running clustering backend ablation..."
+echo "[4/6] Running clustering backend ablation & scalability..."
 uv run python experiments/run_backend_ablation.py
-python experiments/run_scalability_benchmark.py
+uv run python experiments/run_scalability_benchmark.py
 
 echo ""
 echo "[5/6] Generating LaTeX tables..."

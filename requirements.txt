@@ -1,4 +1,4 @@
-# Core dependencies for Residual Trajectory Clustering (RTC)
+# Core dependencies for Boosting Trajectory Clustering (BTC)
 numpy>=1.26.0
 pandas>=2.0.0
 scikit-learn>=1.3.0

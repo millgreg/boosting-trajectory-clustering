@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 Write-Host "================================================="
-Write-Host " RTC: Reproducing All Paper Results and Figures  "
+Write-Host " BTC: Reproducing All Paper Results and Figures  "
 Write-Host "================================================="
 
 $ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -9,7 +9,7 @@ $env:PYTHONPATH = $ProjectRoot
 
 New-Item -ItemType Directory -Force -Path "experiments/results" | Out-Null
 
-Write-Host "`n[1/6] Running canonical benchmark (RTC vs RFC)..."
+Write-Host "`n[1/6] Running canonical benchmark (BTC vs RFC)..."
 uv run python experiments/run_canonical_benchmark.py
 
 Write-Host "`n[2/6] Running unsupervised baselines (K-Means, PCA, UMAP)..."
@@ -18,9 +18,9 @@ uv run python experiments/run_unsupervised_baselines.py
 Write-Host "`n[3/6] Running depth ablation..."
 uv run python experiments/run_depth_ablation.py
 
-Write-Host "`n[4/6] Running clustering backend ablation..."
+Write-Host "`n[4/6] Running clustering backend ablation & scalability..."
 uv run python experiments/run_backend_ablation.py
-python experiments/run_scalability_benchmark.py
+uv run python experiments/run_scalability_benchmark.py
 
 Write-Host "`n[5/6] Generating LaTeX tables..."
 uv run python experiments/generate_tables.py

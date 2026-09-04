@@ -115,13 +115,13 @@ def extract_staged_predictions(booster: Any, X: np.ndarray) -> np.ndarray:
     else:
         raise ValueError(f"Unsupported booster type: {type(booster)}")
 
-class RTC(BaseEstimator, ClusterMixin):
+class BTC(BaseEstimator, ClusterMixin):
     def __init__(self, booster: Optional[Any] = None, n_clusters: int = 3, representation: str = 'per_tree_delta',
                  clustering_algo: str = 'kmeans', similarity: str = 'rbf', normalization: str = 'none', 
                  trajectory_pca: Optional[int] = None, trajectory_umap: Optional[int] = None, windowed: bool = False, window_size: int = 10, window_stride: int = 5,
                  consensus_runs: Optional[int] = None, random_state: Optional[int] = None, target_class: int = 1):
         """
-        Residual Trajectory Clustering (RTC)
+        Boosting Trajectory Clustering (BTC)
         
         Parameters:
         - booster: A fitted gradient boosting model (Sklearn, XGBoost, LightGBM)
@@ -285,15 +285,15 @@ class RTC(BaseEstimator, ClusterMixin):
         return self.labels_
 
 
-class MultiTaskRTC(BaseEstimator, ClusterMixin):
+class MultiTaskBTC(BaseEstimator, ClusterMixin):
     def __init__(self, boosters: Optional[list] = None, n_clusters: int = 3, representation: str = 'per_tree_delta',
                  normalization: str = 'none', trajectory_pca: Optional[int] = None, consensus_runs: Optional[int] = None, random_state: Optional[int] = None):
         """
-        Multi-Task RTC: stacks trajectories from multiple GBDT models.
+        Multi-Task BTC: stacks trajectories from multiple GBDT models.
         
         Parameters:
         - boosters: list of fitted GradientBoostingClassifier models
-        - Other params same as RTC
+        - Other params same as BTC
         """
         self.boosters = boosters or []
         self.n_clusters = n_clusters
@@ -363,7 +363,7 @@ def auto_select_depth(X_train: np.ndarray, y_train: np.ndarray, X_target: np.nda
     """
     Automatically select GBDT depth based on trajectory quality metrics.
     
-    Returns the best (depth, rtc_instance, labels, score, var_ratio_top5, sil) tuple.
+    Returns the best (depth, btc_instance, labels, score, var_ratio_top5, sil) tuple.
     """
     from sklearn.ensemble import GradientBoostingClassifier
     from sklearn.decomposition import PCA
@@ -377,11 +377,11 @@ def auto_select_depth(X_train: np.ndarray, y_train: np.ndarray, X_target: np.nda
             n_estimators=n_estimators, max_depth=depth, random_state=random_state)
         gbm.fit(X_train, y_train)
         
-        rtc = RTC(booster=gbm, n_clusters=n_clusters, representation=representation,
+        btc = BTC(booster=gbm, n_clusters=n_clusters, representation=representation,
                   normalization='none', random_state=random_state)
-        labels = rtc.fit_predict(X_target)
+        labels = btc.fit_predict(X_target)
         
-        R = rtc.trajectories_
+        R = btc.trajectories_
         
         # Compute trajectory quality score:
         # 1. PCA explained variance ratio (top-k should be high)
@@ -400,6 +400,6 @@ def auto_select_depth(X_train: np.ndarray, y_train: np.ndarray, X_target: np.nda
         
         if score > best_score:
             best_score = score
-            best_result = (depth, rtc, labels, score, var_ratio_top5, sil)
+            best_result = (depth, btc, labels, score, var_ratio_top5, sil)
             
     return best_result

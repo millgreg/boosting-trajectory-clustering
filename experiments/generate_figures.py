@@ -26,6 +26,38 @@ plt.rcParams.update({
 
 RESULTS_DIR = r'c:\Users\gm10327\Projects\Miller_BoostingCluster\experiments\results'
 
+DISPLAY_NAMES = {
+    'arrhythmia': 'Arrhythmia',
+    'brca': 'BRCA',
+    'ctg': 'CTG',
+    'dermatology': 'Dermatology',
+    'diabetes': 'Diabetes',
+    'gbmlgg': 'GBMLGG',
+    'har': 'HAR',
+    'leukemia': 'Leukemia',
+    'mice': 'Mice',
+    'paul15': 'Paul15',
+    'segment': 'Segment',
+    'thyroid': 'Thyroid',
+    'vehicle': 'Vehicle'
+}
+
+DATASET_ORDER = [
+    'arrhythmia',
+    'brca',
+    'ctg',
+    'dermatology',
+    'diabetes',
+    'gbmlgg',
+    'har',
+    'leukemia',
+    'mice',
+    'paul15',
+    'segment',
+    'thyroid',
+    'vehicle'
+]
+
 def get_data():
     canon = pd.read_csv(os.path.join(RESULTS_DIR, 'canonical_results_30seeds.csv'))
     km = pd.read_csv(os.path.join(RESULTS_DIR, 'kmeans_baselines.csv'))
@@ -35,7 +67,7 @@ def fig_main_results(df):
     print('Generating Fig 2: Main Results...')
     # Extract configs we want to compare
     methods_to_plot = {
-        'RTC_Stochastic_Delta_sqrt_none': 'RTC (Ours)',
+        'BTC_Stochastic_Delta_sqrt_none': 'BTC (Ours)',
         'Baseline_RFC': 'RFC',
         'Baseline_KMeans': 'K-Means',
         'Baseline_PCA_KMeans': 'PCA + K-Means',
@@ -44,26 +76,32 @@ def fig_main_results(df):
     
     subset = df[df['Method'].isin(methods_to_plot.keys())].copy()
     subset['Method Name'] = subset['Method'].map(methods_to_plot)
+    subset['Dataset'] = subset['Dataset'].map(DISPLAY_NAMES).fillna(subset['Dataset'])
     
     # Calculate mean and std
     summary = subset.groupby(['Dataset', 'Method Name'])['ARI'].agg(['mean', 'std']).reset_index()
     
-    # Sort datasets by RTC mean ARI
-    rtc_means = summary[summary['Method Name'] == 'RTC (Ours)'].set_index('Dataset')['mean'].sort_values(ascending=False)
-    order = rtc_means.index.tolist()
+    # Sort datasets by BTC mean ARI
+    btc_means = summary[summary['Method Name'] == 'BTC (Ours)'].set_index('Dataset')['mean'].sort_values(ascending=False)
+    order = btc_means.index.tolist()
     
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(13, 6))
+    
+    # Okabe-Ito / ColorBrewer colorblind-safe palette (5 methods matching Table 2):
+    # BTC = Sea Green, RFC = Royal Blue, PCA = Warm Amber, UMAP = Sky Blue, K-Means = Muted Purple
+    cb_palette = ['#009E73', '#0072B2', '#E69F00', '#56B4E9', '#7570b3']
+    hue_order = ['BTC (Ours)', 'RFC', 'PCA + K-Means', 'UMAP + K-Means', 'K-Means']
     
     sns.barplot(
         data=subset, 
         x='Dataset', y='ARI', hue='Method Name',
         order=order,
-        hue_order=['RTC (Ours)', 'RFC', 'PCA + K-Means', 'K-Means'],
-        errorbar='sd', ax=ax, errwidth=1.5, capsize=0.05,
-        palette=['#2ca02c', '#1f77b4', '#ff7f0e', '#d62728']
+        hue_order=hue_order,
+        errorbar='sd', ax=ax, err_kws={'linewidth': 1.2}, capsize=0.03,
+        palette=cb_palette
     )
     
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+    ax.tick_params(axis='x', rotation=45)
     ax.set_ylabel('Adjusted Rand Index (ARI)')
     ax.set_xlabel('')
     ax.set_title('Clustering Performance Across Datasets')
@@ -79,9 +117,9 @@ def fig_timing(df):
     # Panel A: Scalability (log-log)
     try:
         scale_df = pd.read_csv(os.path.join(RESULTS_DIR, 'scalability_results.csv'))
-        ax1.plot(scale_df['N'], scale_df['RTC_Time_s'], 'o-', label='RTC (Ours)', color='#2ca02c', linewidth=2)
-        ax1.plot(scale_df['N'], scale_df['Spectral_Time_s'], 's-', label='RFC Spectral', color='#1f77b4', linewidth=2)
-        ax1.plot(scale_df['N'], scale_df['Agglomerative_Time_s'], '^-', label='Agglomerative', color='#ff7f0e', linewidth=2)
+        ax1.plot(scale_df['N'], scale_df['BTC_Time_s'], 'o-', label='BTC (Ours)', color='#009E73', linewidth=2)
+        ax1.plot(scale_df['N'], scale_df['Spectral_Time_s'], 's-', label='RFC Spectral', color='#0072B2', linewidth=2)
+        ax1.plot(scale_df['N'], scale_df['Agglomerative_Time_s'], '^-', label='Agglomerative', color='#E69F00', linewidth=2)
         
         ax1.set_xscale('log')
         ax1.set_yscale('log')
@@ -93,17 +131,17 @@ def fig_timing(df):
         print("Error with scalability data:", e)
         
     # Panel B: Speedup on real datasets
-    default_rtc = 'RTC_Stochastic_Delta_sqrt_none'
-    rtc_time = df[df['Method'] == default_rtc].groupby('Dataset')['Fit_Time_s'].mean()
+    btc_time = df[df['Method'] == 'BTC_Stochastic_Delta_sqrt_none'].groupby('Dataset')['Fit_Time_s'].mean()
     rfc_time = df[df['Method'] == 'Baseline_RFC'].groupby('Dataset')['Fit_Time_s'].mean()
     
     # Inner join to only get datasets that have both
-    common_ds = rtc_time.index.intersection(rfc_time.index)
-    speedup = (rfc_time[common_ds] / rtc_time[common_ds]).sort_values(ascending=False)
+    common_ds = btc_time.index.intersection(rfc_time.index)
+    speedup = (rfc_time[common_ds] / btc_time[common_ds]).sort_values(ascending=False)
+    speedup.index = [DISPLAY_NAMES.get(k, k) for k in speedup.index]
     
-    sns.barplot(x=speedup.index, y=speedup.values, ax=ax2, color='#2ca02c')
-    ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, ha='right')
-    ax2.set_ylabel('Speedup Factor (RFC time / RTC time)')
+    sns.barplot(x=speedup.index, y=speedup.values, ax=ax2, color='#009E73')
+    ax2.tick_params(axis='x', rotation=45)
+    ax2.set_ylabel('Speedup Factor (RFC time / BTC time)')
     ax2.set_title('Speedup over RFC on Benchmark Datasets')
     ax2.axhline(1, color='black', linestyle='--', alpha=0.5)
     
@@ -117,16 +155,20 @@ def fig_depth_ablation():
         depth_df = pd.read_csv(os.path.join(RESULTS_DIR, 'ablation_auto_depth_summary.csv'))
         # Prepare data for plotting
         depth_df['Method Label'] = depth_df['Method'].apply(lambda x: 'Depth-1 Stumps' if 'Fixed_Depth_1' in x else 'Auto-Select Depth')
+        depth_df['Dataset'] = depth_df['Dataset'].map(DISPLAY_NAMES).fillna(depth_df['Dataset'])
         
-        # Sort by dataset
-        order = depth_df['Dataset'].unique()
+        # Sort by canonical dataset order
+        order = [DISPLAY_NAMES[d] for d in DATASET_ORDER if DISPLAY_NAMES[d] in depth_df['Dataset'].unique()]
+        
+        # Blue vs Vermilion (universal colorblind safety & high luminance contrast)
+        depth_palette = ['#0072B2', '#D55E00']
         
         fig, ax = plt.subplots(figsize=(10, 5))
         sns.barplot(
             data=depth_df, x='Dataset', y='ARI_mean', hue='Method Label',
-            order=order, palette=['#2ca02c', '#d62728']
+            order=order, palette=depth_palette
         )
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+        ax.tick_params(axis='x', rotation=45)
         ax.set_ylabel('Mean Adjusted Rand Index (ARI)')
         ax.set_xlabel('')
         ax.set_title('Impact of Tree Depth: Stumps vs Deeper Trees')
@@ -145,28 +187,28 @@ def fig_design_space(df):
     
     # 1. Stochasticity impact
     methods_stoch = {
-        'RTC_Base_Delta_none': 'No Subsampling',
-        'RTC_Stochastic_Delta_0.1_none': '10% Features',
-        'RTC_Stochastic_Delta_sqrt_none': 'Sqrt Features'
+        'BTC_Base_Delta_none': 'No Subsampling',
+        'BTC_Stochastic_Delta_0.1_none': '10% Features',
+        'BTC_Stochastic_Delta_sqrt_none': 'Sqrt Features'
     }
     subset_stoch = df[df['Method'].isin(methods_stoch.keys())].copy()
     subset_stoch['Config'] = subset_stoch['Method'].map(methods_stoch)
     
     # Average across all datasets
-    sns.boxplot(data=subset_stoch, x='Config', y='ARI', ax=ax1, order=['No Subsampling', '10% Features', 'Sqrt Features'], palette='Blues')
+    sns.boxplot(data=subset_stoch, x='Config', y='ARI', hue='Config', legend=False, ax=ax1, order=['No Subsampling', '10% Features', 'Sqrt Features'], palette='Blues')
     ax1.set_title('Effect of Stochastic Feature Subsampling')
     ax1.set_ylabel('ARI (Distribution Across Datasets)')
     ax1.set_xlabel('')
     
     # 2. Representation Type
     methods_rep = {
-        'RTC_Stochastic_Delta_sqrt_none': 'Per-Tree Delta',
-        'RTC_Stochastic_Logodds_sqrt': 'Cumulative Log-Odds'
+        'BTC_Stochastic_Delta_sqrt_none': 'Per-Tree Delta',
+        'BTC_Stochastic_Logodds_sqrt': 'Cumulative Log-Odds'
     }
     subset_rep = df[df['Method'].isin(methods_rep.keys())].copy()
     subset_rep['Config'] = subset_rep['Method'].map(methods_rep)
     
-    sns.boxplot(data=subset_rep, x='Config', y='ARI', ax=ax2, order=['Per-Tree Delta', 'Cumulative Log-Odds'], palette='Greens')
+    sns.boxplot(data=subset_rep, x='Config', y='ARI', hue='Config', legend=False, ax=ax2, order=['Per-Tree Delta', 'Cumulative Log-Odds'], palette='Greens')
     ax2.set_title('Effect of Trajectory Representation')
     ax2.set_ylabel('ARI (Distribution Across Datasets)')
     ax2.set_xlabel('')

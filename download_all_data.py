@@ -16,14 +16,15 @@ def main():
     scripts = [
         os.path.join(data_dir, 'ctg', 'preprocess_ctg.py'),
         os.path.join(data_dir, 'mice', 'preprocess_mice.py'),
+        os.path.join(data_dir, 'diabetes', 'preprocess_diabetes.py'),
         os.path.join(data_dir, 'scrna', 'preprocess_scrna.py'),
         os.path.join(data_dir, 'tcga', 'preprocess_brca.py'),
         os.path.join(data_dir, 'tcga', 'update_brca_staging.py'),
         os.path.join(data_dir, 'tcga_gbmlgg', 'preprocess_gbmlgg.py')
     ]
     
-    print("This script will download and preprocess all required datasets for the RTC benchmarks.")
-    print("Standard benchmark datasets (e.g., Dermatology, Vehicle, Thyroid, Diabetes) are fetched on-the-fly via OpenML during runtime.")
+    print("This script will download and preprocess all required datasets for the BTC benchmarks.")
+    print("Standard benchmark datasets (e.g., Dermatology, Vehicle, Thyroid) are fetched on-the-fly via OpenML during runtime.")
     print("This script prepares the complex medical and biological datasets.\n")
     
     for script in scripts:

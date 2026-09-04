@@ -1,10 +1,10 @@
-# Residual Trajectory Clustering (RTC)
+# Boosting Trajectories for Supervised Clustering
 
-This repository contains the code to reproduce the experiments and figures for the paper **Residual Trajectory Clustering** (TMLR Submission).
+This repository contains the code to reproduce the experiments and figures for the paper **Boosting Trajectories for Supervised Clustering: Fast Subtype Discovery without Proximity Matrices**.
 
 ## Overview
 
-Residual Trajectory Clustering (RTC) discovers latent subtypes within a supervised classification task by clustering the *learning trajectories* of gradient boosting models. Instead of using final predictions or spatial features, RTC extracts the per-tree residual updates across boosting rounds and clusters these temporal trajectories to reveal hidden substructure in $O(N)$ time.
+This work discovers latent subtypes within a supervised classification task by clustering the *learning trajectories* of gradient boosting models. Instead of relying on scalar final predictions or spatial features, we extract the sequence of per-tree margin updates across boosting rounds and cluster these temporal trajectories to reveal hidden subpopulation structure in $O(N)$ time.
 
 ## Requirements
 
@@ -16,20 +16,30 @@ pip install -r requirements.txt
 
 ## Quick Start (Usage)
 
-RTC is designed to be fully compatible with the `scikit-learn` API. You can drop it into any existing pipeline where you would normally use `$K$-Means`.
+BTC is designed to be fully compatible with the `scikit-learn` API. You can drop it into any existing pipeline where you would normally use `$K$-Means`.
 
 ```python
 from sklearn.ensemble import GradientBoostingClassifier
-from rtc.core import RTC
+from btc.core import BTC
 
 # 1. Train a Gradient Booster on a coarse binary proxy task
 gb = GradientBoostingClassifier(n_estimators=100, max_depth=1, max_features='sqrt')
 gb.fit(X_full, y_coarse_proxy)
 
 # 2. Extract trajectory representations and cluster the target cohort
-rtc = RTC(booster=gb, n_clusters=4, representation='per_tree_delta')
-predicted_subtypes = rtc.fit_predict(X_target)
+btc = BTC(booster=gb, n_clusters=4, representation='per_tree_delta')
+predicted_subtypes = btc.fit_predict(X_target)
 ```
+
+## Data Preparation
+
+Before running the full reproduction suite, prepare the biomedical datasets by executing:
+
+```bash
+uv run python download_all_data.py
+```
+
+This automatically downloads and preprocesses the complex biomedical datasets (TCGA BRCA, TCGA GBMLGG, Paul15, CTG, Mice, Diabetes) from their official sources into `data/`. For complete dataset provenance, ICD-9 diagnostic groupings, and citations, see [data/README.md](data/README.md).
 
 ## Reproducing the Paper
 
@@ -46,7 +56,7 @@ bash reproduce.sh
 ```
 
 **What this script does:**
-1. Runs the canonical RTC and RFC benchmarks (`experiments/run_canonical_benchmark.py`).
+1. Runs the canonical BTC and RFC benchmarks (`experiments/run_canonical_benchmark.py`).
 2. Computes unsupervised baselines (K-Means, PCA, UMAP) (`experiments/run_unsupervised_baselines.py`).
 3. Executes the tree depth ablation (`experiments/run_depth_ablation.py`).
 4. Executes the clustering backend ablation (`experiments/run_backend_ablation.py`).
@@ -59,7 +69,7 @@ After running the script, simply compile the LaTeX document in `paper/main.tex` 
 
 ```
 BoostingCluster/
-├── rtc/                        # Core RTC algorithm library
+├── btc/                        # Core BTC algorithm library
 │   └── core.py                 
 ├── experiments/                # Experiment scripts
 │   ├── run_canonical_benchmark.py

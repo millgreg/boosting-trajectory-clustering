@@ -11,7 +11,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from rtc.core import RTC
+from btc.core import BTC
 from baselines.rfc import RFC
 from experiments.dataset_loader import load_dataset, ALL_DATASETS
 
@@ -52,6 +52,7 @@ def run_seed(seed, name, X_full, y_binary, X_target, y_true_subtypes, k):
         'AUC': auc, 
         'Fit_Time_s': t_sec,
         'N_Samples': X_full.shape[0],
+        'N_Target': X_target.shape[0],
         'N_Features': X_full.shape[1],
         'K_Clusters': k
     })
@@ -59,18 +60,18 @@ def run_seed(seed, name, X_full, y_binary, X_target, y_true_subtypes, k):
     # Core Configurations
     configs = [
         # (name, representation, normalization, consensus_runs, max_features)
-        ('RTC_Base_Delta_persample', 'per_tree_delta', 'per-sample', None, None),
-        ('RTC_Base_Delta_none', 'per_tree_delta', 'none', None, None),
-        ('RTC_Base_Logodds', 'cumul_logodds', 'none', None, None),
-        ('RTC_Consensus_Delta_persample', 'per_tree_delta', 'per-sample', 100, None),
-        ('RTC_Consensus_Delta_none', 'per_tree_delta', 'none', 100, None),
-        ('RTC_Consensus_Logodds', 'cumul_logodds', 'none', 100, None),
-        ('RTC_Stochastic_Delta_sqrt_persample', 'per_tree_delta', 'per-sample', None, 'sqrt'),
-        ('RTC_Stochastic_Delta_sqrt_none', 'per_tree_delta', 'none', None, 'sqrt'),
-        ('RTC_Stochastic_Logodds_sqrt', 'cumul_logodds', 'none', None, 'sqrt'),
-        ('RTC_Stochastic_Delta_0.1_persample', 'per_tree_delta', 'per-sample', None, 0.1),
-        ('RTC_Stochastic_Delta_0.1_none', 'per_tree_delta', 'none', None, 0.1),
-        ('RTC_Stochastic_Logodds_0.1', 'cumul_logodds', 'none', None, 0.1),
+        ('BTC_Base_Delta_persample', 'per_tree_delta', 'per-sample', None, None),
+        ('BTC_Base_Delta_none', 'per_tree_delta', 'none', None, None),
+        ('BTC_Base_Logodds', 'cumul_logodds', 'none', None, None),
+        ('BTC_Consensus_Delta_persample', 'per_tree_delta', 'per-sample', 100, None),
+        ('BTC_Consensus_Delta_none', 'per_tree_delta', 'none', 100, None),
+        ('BTC_Consensus_Logodds', 'cumul_logodds', 'none', 100, None),
+        ('BTC_Stochastic_Delta_sqrt_persample', 'per_tree_delta', 'per-sample', None, 'sqrt'),
+        ('BTC_Stochastic_Delta_sqrt_none', 'per_tree_delta', 'none', None, 'sqrt'),
+        ('BTC_Stochastic_Logodds_sqrt', 'cumul_logodds', 'none', None, 'sqrt'),
+        ('BTC_Stochastic_Delta_0.1_persample', 'per_tree_delta', 'per-sample', None, 0.1),
+        ('BTC_Stochastic_Delta_0.1_none', 'per_tree_delta', 'none', None, 0.1),
+        ('BTC_Stochastic_Logodds_0.1', 'cumul_logodds', 'none', None, 0.1),
     ]
 
     n_features = X_full.shape[1]
@@ -92,7 +93,7 @@ def run_seed(seed, name, X_full, y_binary, X_target, y_true_subtypes, k):
             else:
                 auc = np.nan
             
-            rtc = RTC(
+            btc = BTC(
                 booster=gb, 
                 n_clusters=k, 
                 representation=rep, 
@@ -101,7 +102,7 @@ def run_seed(seed, name, X_full, y_binary, X_target, y_true_subtypes, k):
                 consensus_runs=consensus, 
                 random_state=seed
             )
-            labels = rtc.fit_predict(X_target)
+            labels = btc.fit_predict(X_target)
             ari = adjusted_rand_score(y_true_subtypes, labels)
             nmi = normalized_mutual_info_score(y_true_subtypes, labels)
             t_sec = time.time() - t0
@@ -118,6 +119,7 @@ def run_seed(seed, name, X_full, y_binary, X_target, y_true_subtypes, k):
             'AUC': auc, 
             'Fit_Time_s': t_sec,
             'N_Samples': X_full.shape[0],
+            'N_Target': X_target.shape[0],
             'N_Features': X_full.shape[1],
             'K_Clusters': k
         })

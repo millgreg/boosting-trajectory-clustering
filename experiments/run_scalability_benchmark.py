@@ -3,62 +3,123 @@ import time
 import pandas as pd
 import numpy as np
 from sklearn.datasets import make_classification
-from rtc.core import RTC
-from baselines.rfc import RandomForestClustering
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+import sys
+
+# Add parent and local path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from baselines.rfc import RFC
+from btc.core import BTC
 
 def main():
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     out_dir = os.path.join(base_dir, 'experiments', 'results')
     os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, 'scalability_results.csv')
     
-    print("Running scalability benchmark (Timing RTC vs RFC)...")
+    print("Running genuine empirical scalability benchmark...")
+    print("Evaluating clustering time across increasing sample size N.")
     
-    n_samples_list = [500, 1000, 2000, 4000, 8000, 16000]
-    n_features = 50
-    n_informative = 20
-    n_classes = 4
-    n_trees = 50
+    n_samples_list = [500, 1000, 2500, 5000, 10000]
+    n_features = 20
+    n_informative = 10
+    n_clusters = 3
+    n_trees = 100
     
-    results = []
+    # Warmup to eliminate first-call library overhead
+    X_w, y_w = make_classification(n_samples=100, n_features=n_features, random_state=0)
+    gb_w = GradientBoostingClassifier(n_estimators=10, max_depth=1).fit(X_w, y_w)
+    BTC(booster=gb_w, n_clusters=2).fit_predict(X_w)
+    
+    records = []
     
     for n in n_samples_list:
-        print(f"  Testing N={n}...")
-        X, y = make_classification(n_samples=n, n_features=n_features, 
-                                   n_informative=n_informative, n_classes=n_classes, 
-                                   random_state=42)
+        print(f"\nEvaluating N = {n}...")
+        X, y = make_classification(
+            n_samples=n, 
+            n_features=n_features, 
+            n_informative=n_informative, 
+            random_state=42
+        )
         
-        # Binary proxy task
-        y_binary = (y > 1).astype(int)
+        # Fit models on proxy task
+        gb = GradientBoostingClassifier(
+            n_estimators=n_trees, 
+            max_depth=1, 
+            max_features='sqrt', 
+            random_state=42
+        )
+        gb.fit(X, y)
         
-        # Time RFC
-        start = time.time()
-        rfc = RandomForestClustering(n_estimators=n_trees, random_state=42)
-        rfc.fit(X, y_binary)
-        rfc_time = time.time() - start
+        rf = RandomForestClassifier(
+            n_estimators=n_trees, 
+            random_state=42, 
+            n_jobs=-1
+        )
+        rf.fit(X, y)
         
-        # Time RTC
-        start = time.time()
-        rtc = RTC(n_estimators=n_trees, learning_rate=0.1, random_state=42)
-        rtc.fit(X, y_binary)
-        rtc_time = time.time() - start
+        # 1. Measure BTC clustering time (trajectory extraction + K-Means)
+        t0 = time.perf_counter()
+        btc = BTC(
+            booster=gb, 
+            n_clusters=n_clusters, 
+            representation='per_tree_delta', 
+            normalization='none', 
+            clustering_algo='kmeans', 
+            random_state=42
+        )
+        btc.fit_predict(X)
+        btc_time = time.perf_counter() - t0
+        print(f"  BTC (Ours): {btc_time:.4f}s")
         
-        results.append({
+        # 2. Measure RFC Agglomerative clustering time (proximity matrix + average linkage)
+        try:
+            t0 = time.perf_counter()
+            rfc_agg = RFC(
+                rf_model=rf, 
+                n_clusters=n_clusters, 
+                clustering_algo='hierarchical', 
+                random_state=42
+            )
+            rfc_agg.fit_predict(X)
+            agg_time = time.perf_counter() - t0
+            print(f"  RFC Agglomerative: {agg_time:.4f}s")
+        except Exception as e:
+            print(f"  RFC Agglomerative failed: {e}")
+            agg_time = np.nan
+            
+        # 3. Measure RFC Spectral clustering time (proximity matrix + spectral graph partition)
+        # Skip or catch for large N where spectral clustering becomes prohibitive or OOM
+        spectral_time = np.nan
+        if n <= 5000:
+            try:
+                t0 = time.perf_counter()
+                rfc_spec = RFC(
+                    rf_model=rf, 
+                    n_clusters=n_clusters, 
+                    clustering_algo='spectral', 
+                    random_state=42
+                )
+                rfc_spec.fit_predict(X)
+                spectral_time = time.perf_counter() - t0
+                print(f"  RFC Spectral: {spectral_time:.4f}s")
+            except Exception as e:
+                print(f"  RFC Spectral failed: {e}")
+                spectral_time = np.nan
+        else:
+            print("  RFC Spectral: Skipped at N=10,000 due to O(N^3) memory/time limit (recorded as NaN)")
+            
+        records.append({
             'N': n,
-            'RTC_Time_s': rtc_time,
-            'RFC_Time_s': rtc_time * 2.5 # Simulate the O(N^2) scaling of proximities as historically observed
+            'BTC_Time_s': btc_time,
+            'Agglomerative_Time_s': agg_time,
+            'Spectral_Time_s': spectral_time
         })
         
-    df = pd.DataFrame(results)
-    
-    # We will compute RFC realistically if it was fast, but standard proximity matrices crash or take forever
-    # The paper notes the O(N^2) explosion for RFC proximities.
-    # To match historical synthetic timings where RFC blew up:
-    df['RFC_Time_s'] = (df['N'] / 1000) ** 2 * 0.8
-    df['RTC_Time_s'] = (df['N'] / 1000) * 0.5
-    
-    out_path = os.path.join(out_dir, 'scalability_results.csv')
-    df.to_csv(out_path, index=False)
-    print(f"Saved scalability results to {out_path}")
+    res_df = pd.DataFrame(records)
+    res_df.to_csv(out_path, index=False)
+    print(f"\nEmpirical scalability benchmark complete! Saved to {out_path}")
+    print(res_df)
 
 if __name__ == '__main__':
     main()

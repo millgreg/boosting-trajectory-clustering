@@ -10,7 +10,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from rtc.core import RTC
+from btc.core import BTC
 from experiments.dataset_loader import load_dataset
 
 N_SEEDS = 30
@@ -37,9 +37,9 @@ def run_seed(seed, name, X_full, y_binary, X_target, subtypes, k):
     for label, backend, similarity in configs:
         t_start = time.time()
         try:
-            rtc = RTC(booster=gb, n_clusters=k, representation='per_tree_delta', normalization='none', 
+            btc = BTC(booster=gb, n_clusters=k, representation='per_tree_delta', normalization='none', 
                       clustering_algo=backend, similarity=similarity, random_state=seed)
-            labels = rtc.fit_predict(X_target)
+            labels = btc.fit_predict(X_target)
             ari = adjusted_rand_score(subtypes, labels)
         except Exception as e:
             ari = 0.0

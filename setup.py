@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='rtc-clustering',
+    name='btc-clustering',
     version='0.1.0',
-    description='Residual Trajectory Clustering',
+    description='Boosting Trajectory Clustering',
     author='Miller et al.',
-    packages=find_packages(include=['rtc', 'rtc.*']),
+    packages=find_packages(include=['btc', 'btc.*']),
     install_requires=[
         'numpy',
         'scikit-learn',
