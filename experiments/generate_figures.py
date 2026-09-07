@@ -24,8 +24,6 @@ plt.rcParams.update({
     'ps.fonttype': 42
 })
 
-RESULTS_DIR = r'c:\Users\gm10327\Projects\Miller_BoostingCluster\experiments\results'
-
 DISPLAY_NAMES = {
     'arrhythmia': 'Arrhythmia',
     'brca': 'BRCA',
@@ -153,19 +151,25 @@ def fig_depth_ablation():
     print('Generating Fig 4: Depth Ablation...')
     try:
         depth_df = pd.read_csv(os.path.join(RESULTS_DIR, 'ablation_auto_depth_summary.csv'))
-        # Prepare data for plotting
-        depth_df['Method Label'] = depth_df['Method'].apply(lambda x: 'Depth-1 Stumps' if 'Fixed_Depth_1' in x else 'Auto-Select Depth')
+        depth_map = {
+            'Fixed_Depth_1': 'Depth-1 (Stump)',
+            'Fixed_Depth_2': 'Depth-2',
+            'Fixed_Depth_3': 'Depth-3',
+            'Fixed_Depth_5': 'Depth-5'
+        }
+        depth_df = depth_df[depth_df['Method'].isin(depth_map.keys())].copy()
+        depth_df['Tree Depth'] = depth_df['Method'].map(depth_map)
         depth_df['Dataset'] = depth_df['Dataset'].map(DISPLAY_NAMES).fillna(depth_df['Dataset'])
         
         # Sort by canonical dataset order
         order = [DISPLAY_NAMES[d] for d in DATASET_ORDER if DISPLAY_NAMES[d] in depth_df['Dataset'].unique()]
         
-        # Blue vs Vermilion (universal colorblind safety & high luminance contrast)
-        depth_palette = ['#0072B2', '#D55E00']
+        # Okabe-Ito colorblind palette for 4 depth levels
+        depth_palette = ['#0072B2', '#56B4E9', '#E69F00', '#D55E00']
         
         fig, ax = plt.subplots(figsize=(10, 5))
         sns.barplot(
-            data=depth_df, x='Dataset', y='ARI_mean', hue='Method Label',
+            data=depth_df, x='Dataset', y='ARI_mean', hue='Tree Depth',
             order=order, palette=depth_palette
         )
         ax.tick_params(axis='x', rotation=45)

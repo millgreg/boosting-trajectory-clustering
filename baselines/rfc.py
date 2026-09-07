@@ -1,9 +1,11 @@
+from typing import Any, Optional
 import numpy as np
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.cluster import SpectralClustering, AgglomerativeClustering
 
 class RFC(BaseEstimator, ClusterMixin):
-    def __init__(self, rf_model=None, n_clusters=3, clustering_algo='spectral', random_state=None):
+    def __init__(self, rf_model: Optional[Any] = None, n_clusters: int = 3, 
+                 clustering_algo: str = 'spectral', random_state: Optional[int] = None):
         """
         Random Forest Clustering (RFC)
         Uses leaf co-occurrence proximity from a fitted Random Forest.
@@ -12,17 +14,20 @@ class RFC(BaseEstimator, ClusterMixin):
         - rf_model: A fitted RandomForestClassifier
         - n_clusters: Number of subclusters to find
         - clustering_algo: Clustering algorithm ('spectral', 'hierarchical')
+        - random_state: Random state for clustering algorithms
         """
         self.rf_model = rf_model
         self.n_clusters = n_clusters
         self.clustering_algo = clustering_algo
         self.random_state = random_state
         
-    def fit_predict(self, X, y=None):
+    def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> "RFC":
         """
-        Cluster the given samples X using the leaf proximity matrix.
-        X should be the target class samples only.
+        Compute leaf proximity matrix and cluster the given samples X.
         """
+        if self.rf_model is None:
+            raise ValueError("A fitted RandomForestClassifier must be provided.")
+
         # leaf_indices shape: (n_samples, n_estimators)
         leaf_indices = self.rf_model.apply(X) 
         n_samples, n_estimators = leaf_indices.shape
@@ -60,4 +65,10 @@ class RFC(BaseEstimator, ClusterMixin):
         else:
             raise ValueError(f"Unknown clustering_algo: {self.clustering_algo}")
             
-        return self.labels_
+        return self
+
+    def fit_predict(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> np.ndarray:
+        """
+        Cluster the given samples X using the leaf proximity matrix.
+        """
+        return self.fit(X, y).labels_

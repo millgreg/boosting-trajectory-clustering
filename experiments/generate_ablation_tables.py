@@ -11,12 +11,10 @@ os.makedirs(OUT_DIR, exist_ok=True)
 try:
     df_adv = pd.read_csv(os.path.join(RESULTS_DIR, 'ablation_advanced_summary.csv'))
     df_adv['Method_Clean'] = df_adv['Method'].replace({
-        'BTC_Base_per_tree_delta': 'K-Means (Default)',
-        'BTC_GMM_per_tree_delta': 'GMM (Full Covariance)',
-        'BTC_UMAP_2': 'UMAP (2D) + K-Means',
-        'BTC_UMAP_5': 'UMAP (5D) + K-Means',
-        'BTC_Base_cumul_logodds': 'K-Means (Log-Odds)',
-        'BTC_GMM_cumul_logodds': 'GMM (Log-Odds)'
+        'KMeans': '$K$-Means (Default)',
+        'Agglomerative': 'Agglomerative (Ward)',
+        'Spectral': 'Spectral (RBF)',
+        'GMM': 'Gaussian Mixture Model (GMM)'
     })
     
     summary = df_adv.groupby('Method_Clean')['ARI_mean'].mean().reset_index().sort_values('ARI_mean', ascending=False)
@@ -84,11 +82,11 @@ try:
     tex_depth = [
         '\\begin{table}[h]',
         '\\centering',
-        '\\caption{Comparison of fixed Depth-1 stumps versus deeper trees (Depth 2, 3, 5) and an auto-selection heuristic.}',
+        '\\caption{Comparison of fixed Depth-1 decision stumps versus deeper trees (Depths 2, 3, 5).}',
         '\\label{tab:app_depth}',
-        '\\begin{tabular}{lccccc}',
+        '\\begin{tabular}{lcccc}',
         '\\toprule',
-        '\\textbf{Dataset} & \\textbf{Depth-1} & \\textbf{Depth-2} & \\textbf{Depth-3} & \\textbf{Depth-5} & \\textbf{Auto-Select} \\\\',
+        '\\textbf{Dataset} & \\textbf{Depth-1 (Stump)} & \\textbf{Depth-2} & \\textbf{Depth-3} & \\textbf{Depth-5} \\\\',
         '\\midrule'
     ]
     
@@ -99,14 +97,13 @@ try:
         d2 = ds_data[ds_data['Method'] == 'Fixed_Depth_2']['ARI_mean'].values[0] if len(ds_data[ds_data['Method'] == 'Fixed_Depth_2']) > 0 else 0
         d3 = ds_data[ds_data['Method'] == 'Fixed_Depth_3']['ARI_mean'].values[0] if len(ds_data[ds_data['Method'] == 'Fixed_Depth_3']) > 0 else 0
         d5 = ds_data[ds_data['Method'] == 'Fixed_Depth_5']['ARI_mean'].values[0] if len(ds_data[ds_data['Method'] == 'Fixed_Depth_5']) > 0 else 0
-        dauto = ds_data[ds_data['Method'] == 'Auto_Select']['ARI_mean'].values[0] if len(ds_data[ds_data['Method'] == 'Auto_Select']) > 0 else 0
         
-        row_vals = [d1, d2, d3, d5, dauto]
+        row_vals = [d1, d2, d3, d5]
         max_val = max(row_vals)
         strs = [f"\\mathbf{{{v:.3f}}}" if v == max_val else f"{v:.3f}" for v in row_vals]
         
         disp = DISPLAY_NAMES.get(ds, ds.capitalize())
-        tex_depth.append(f"{disp} & ${strs[0]}$ & ${strs[1]}$ & ${strs[2]}$ & ${strs[3]}$ & ${strs[4]}$ \\\\")
+        tex_depth.append(f"{disp} & ${strs[0]}$ & ${strs[1]}$ & ${strs[2]}$ & ${strs[3]}$ \\\\")
         
     tex_depth.extend([
         '\\bottomrule',

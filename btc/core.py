@@ -2,7 +2,41 @@ import numpy as np
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.metrics.pairwise import cosine_similarity, rbf_kernel
 from sklearn.cluster import SpectralClustering, AgglomerativeClustering, KMeans
-from typing import Any, Optional, Union
+from typing import Any, Optional, Sequence
+
+def extract_raw_init(booster: Any, X: np.ndarray) -> np.ndarray:
+    """
+    Extracts the baseline prior prediction F_0 (pre-tree offset) from various boosters.
+    Returns 1D array of shape (n_samples,) for binary or 2D for multiclass.
+    """
+    if hasattr(booster, '_raw_predict_init'):
+        f0 = booster._raw_predict_init(X)
+        if f0.ndim > 1 and f0.shape[1] > 1:
+            return f0
+        return f0.ravel()
+    elif type(booster).__name__ == 'XGBClassifier':
+        # In XGBoost, iteration_range=(0,0) evaluates all trees.
+        # The true initial base score is logit(base_score).
+        try:
+            import json, scipy.special
+            config = json.loads(booster.get_booster().save_config())
+            base_score_str = config['learner']['learner_model_param']['base_score']
+            base_score = float(base_score_str.strip('[]'))
+            f0_val = float(scipy.special.logit(base_score)) if 0 < base_score < 1 else 0.0
+        except Exception:
+            f0_val = 0.0
+        return np.full(X.shape[0], f0_val)
+    elif type(booster).__name__ == 'LGBMClassifier':
+        # In LightGBM, num_iteration=0 evaluates all trees.
+        # The true initial base score is stored in the root's internal_value.
+        try:
+            dump = booster.booster_.dump_model()
+            f0_val = float(dump['tree_info'][0]['tree_structure'].get('internal_value', 0.0))
+        except Exception:
+            f0_val = 0.0
+        return np.full(X.shape[0], f0_val)
+    else:
+        return np.zeros(X.shape[0])
 
 def extract_staged_decision_function(booster: Any, X: np.ndarray) -> np.ndarray:
     """
@@ -25,7 +59,7 @@ def extract_staged_decision_function(booster: Any, X: np.ndarray) -> np.ndarray:
     elif type(booster).__name__ == 'XGBClassifier':
         # xgboost staged raw margin predictions
         staged_preds = []
-        n_estimators = getattr(booster, 'n_estimators', 100)
+        n_estimators = getattr(booster, 'n_estimators', None) or 100
         # Check if the booster supports iteration_range
         for i in range(1, n_estimators + 1):
             margin = booster.predict(X, output_margin=True, iteration_range=(0, i))
@@ -45,7 +79,7 @@ def extract_staged_decision_function(booster: Any, X: np.ndarray) -> np.ndarray:
     elif type(booster).__name__ == 'LGBMClassifier':
         # lightgbm staged raw margin predictions
         staged_preds = []
-        n_estimators = getattr(booster, 'n_estimators', 100)
+        n_estimators = getattr(booster, 'n_estimators', None) or 100
         for i in range(1, n_estimators + 1):
             margin = booster.predict(X, raw_score=True, num_iteration=i)
             if margin.ndim > 1:
@@ -84,7 +118,7 @@ def extract_staged_predictions(booster: Any, X: np.ndarray) -> np.ndarray:
     elif type(booster).__name__ == 'XGBClassifier':
         # xgboost
         staged_preds = []
-        n_estimators = getattr(booster, 'n_estimators', 100)
+        n_estimators = getattr(booster, 'n_estimators', None) or 100
         for i in range(1, n_estimators + 1):
             p = booster.predict_proba(X, iteration_range=(0, i))
             if p.shape[1] > 2:
@@ -99,7 +133,7 @@ def extract_staged_predictions(booster: Any, X: np.ndarray) -> np.ndarray:
     elif type(booster).__name__ == 'LGBMClassifier':
         # lightgbm
         staged_preds = []
-        n_estimators = getattr(booster, 'n_estimators', 100)
+        n_estimators = getattr(booster, 'n_estimators', None) or 100
         for i in range(1, n_estimators + 1):
             p = booster.predict(X, raw_score=False, num_iteration=i)
             if p.ndim > 1 and p.shape[1] > 2:
@@ -151,7 +185,6 @@ class BTC(BaseEstimator, ClusterMixin):
         self.window_stride = window_stride
         self.consensus_runs = consensus_runs
         self.random_state = random_state
-        self.target_class = target_class
         
     @staticmethod
     def _windowed_features(R: np.ndarray, window_size: int = 10, stride: int = 5) -> np.ndarray:
@@ -173,11 +206,13 @@ class BTC(BaseEstimator, ClusterMixin):
             features.append(slopes)                      # trend
         return np.column_stack(features)
         
-    def fit_predict(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> np.ndarray:
+    def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> "BTC":
         """
-        Cluster the given samples X. 
-        Note: X should ONLY contain samples from self.target_class.
+        Fit the BTC clustering model on samples X.
         """
+        if self.booster is None:
+            raise ValueError("A fitted booster model must be provided.")
+
         # 1. Extract Trajectory Representation
         if self.representation == 'cumul_proba':
             R = extract_staged_predictions(self.booster, X)
@@ -185,13 +220,23 @@ class BTC(BaseEstimator, ClusterMixin):
             R = extract_staged_decision_function(self.booster, X)
         elif self.representation == 'per_tree_delta':
             lo = extract_staged_decision_function(self.booster, X)
-            R = np.diff(lo, axis=1, prepend=lo[:, 0:1])
+            f0 = extract_raw_init(self.booster, X)
+            if f0.ndim == 1 and lo.ndim == 2:
+                lo_full = np.column_stack([f0, lo])
+            else:
+                lo_full = np.hstack([f0, lo])
+            R = np.diff(lo_full, axis=1)
         elif self.representation == 'proba_deriv':
             P = extract_staged_predictions(self.booster, X)
             R = np.diff(P, axis=1)
         elif self.representation == 'ensemble':
             lo = extract_staged_decision_function(self.booster, X)
-            delta = np.diff(lo, axis=1, prepend=lo[:, 0:1])
+            f0 = extract_raw_init(self.booster, X)
+            if f0.ndim == 1 and lo.ndim == 2:
+                lo_full = np.column_stack([f0, lo])
+            else:
+                lo_full = np.hstack([f0, lo])
+            delta = np.diff(lo_full, axis=1)
             R = np.hstack([lo, delta])
         else:
             raise ValueError(f"Unknown representation: {self.representation}")
@@ -282,7 +327,13 @@ class BTC(BaseEstimator, ClusterMixin):
         else:
             raise ValueError(f"Unknown clustering_algo: {self.clustering_algo}")
             
-        return self.labels_
+        return self
+
+    def fit_predict(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> np.ndarray:
+        """
+        Cluster the given samples X and return cluster labels.
+        """
+        return self.fit(X, y).labels_
 
 
 class MultiTaskBTC(BaseEstimator, ClusterMixin):
@@ -303,14 +354,25 @@ class MultiTaskBTC(BaseEstimator, ClusterMixin):
         self.consensus_runs = consensus_runs
         self.random_state = random_state
         
-    def fit_predict(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> np.ndarray:
+    def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> "MultiTaskBTC":
+        """
+        Fit MultiTaskBTC on samples X.
+        """
+        if not self.boosters:
+            raise ValueError("At least one fitted booster model must be provided.")
+
         trajectories = []
         for booster in self.boosters:
             if self.representation == 'cumul_logodds':
                 R = extract_staged_decision_function(booster, X)
             elif self.representation == 'per_tree_delta':
                 lo = extract_staged_decision_function(booster, X)
-                R = np.diff(lo, axis=1, prepend=lo[:, 0:1])
+                f0 = extract_raw_init(booster, X)
+                if f0.ndim == 1 and lo.ndim == 2:
+                    lo_full = np.column_stack([f0, lo])
+                else:
+                    lo_full = np.hstack([f0, lo])
+                R = np.diff(lo_full, axis=1)
             elif self.representation == 'cumul_proba':
                 R = extract_staged_predictions(booster, X)
             elif self.representation == 'proba_deriv':
@@ -354,17 +416,25 @@ class MultiTaskBTC(BaseEstimator, ClusterMixin):
             clusterer = KMeans(n_clusters=self.n_clusters, n_init=20, random_state=self.random_state)
             self.labels_ = clusterer.fit_predict(R_multi)
             
-        return self.labels_
+        return self
+
+    def fit_predict(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> np.ndarray:
+        """
+        Cluster samples X and return cluster labels.
+        """
+        return self.fit(X, y).labels_
 
 
 def auto_select_depth(X_train: np.ndarray, y_train: np.ndarray, X_target: np.ndarray, n_clusters: int, 
-                      depths: list = [1, 2, 3, 5], n_estimators: int = 100,
+                      depths: Optional[Sequence[int]] = None, n_estimators: int = 100,
                       representation: str = 'cumul_logodds', random_state: int = 42) -> tuple:
     """
     Automatically select GBDT depth based on trajectory quality metrics.
     
     Returns the best (depth, btc_instance, labels, score, var_ratio_top5, sil) tuple.
     """
+    if depths is None:
+        depths = (1, 2, 3, 5)
     from sklearn.ensemble import GradientBoostingClassifier
     from sklearn.decomposition import PCA
     from sklearn.metrics import silhouette_score

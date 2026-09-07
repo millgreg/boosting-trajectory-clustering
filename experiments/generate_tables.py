@@ -1,5 +1,7 @@
-import pandas as pd
 import os
+import numpy as np
+import pandas as pd
+from dataset_loader import load_dataset
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESULTS_DIR = os.path.join(BASE_DIR, 'results')
@@ -129,8 +131,6 @@ print(f'Table generated in {SUMMARY_OUT_FILE}')
 # -------------------------------------------------------------
 # Generate Detailed Dataset Cohort Breakdown Table (Appendix)
 # -------------------------------------------------------------
-from dataset_loader import load_dataset
-import numpy as np
 
 DATASET_DESCRIPTIONS = {
     'thyroid': {

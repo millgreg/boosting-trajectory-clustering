@@ -24,27 +24,17 @@ def run_seed(seed, name, X_full, y_binary, X_target, subtypes, k):
         ('Fixed_Depth_1', 1),
         ('Fixed_Depth_2', 2),
         ('Fixed_Depth_3', 3),
-        ('Fixed_Depth_5', 5),
-        ('Auto_Select', None)
+        ('Fixed_Depth_5', 5)
     ]
     
     for config_name, depth in configs:
         t0 = time.time()
         try:
-            if depth is not None:
-                gb = GradientBoostingClassifier(n_estimators=100, max_depth=depth, max_features='sqrt', random_state=seed)
-                gb.fit(X_full, y_binary)
-                
-                btc = BTC(booster=gb, n_clusters=k, representation='per_tree_delta', normalization='none', random_state=seed)
-                labels = btc.fit_predict(X_target)
-            else:
-                # Auto-select simply means running a grid search or similar. 
-                # For simplicity here, we simulate it by using the best from an inner validation or just plotting the default 'Auto' which is depth=1 in our case since stump is best.
-                gb = GradientBoostingClassifier(n_estimators=100, max_depth=1, max_features='sqrt', random_state=seed)
-                gb.fit(X_full, y_binary)
-                btc = BTC(booster=gb, n_clusters=k, representation='per_tree_delta', normalization='none', random_state=seed)
-                labels = btc.fit_predict(X_target)
-                
+            gb = GradientBoostingClassifier(n_estimators=100, max_depth=depth, max_features='sqrt', random_state=seed)
+            gb.fit(X_full, y_binary)
+            
+            btc = BTC(booster=gb, n_clusters=k, representation='per_tree_delta', normalization='none', random_state=seed)
+            labels = btc.fit_predict(X_target)
             ari = adjusted_rand_score(subtypes, labels)
         except Exception as e:
             print(f"Error {config_name} {name} seed {seed}: {e}")

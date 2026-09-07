@@ -26,7 +26,6 @@ def run_seed(seed, name, X_full, y_binary, X_target, subtypes, k):
         ('Agglomerative', 'agglomerative', None)
     ]
     
-    t0 = time.time()
     try:
         gb = GradientBoostingClassifier(n_estimators=100, max_depth=1, max_features='sqrt', random_state=seed)
         gb.fit(X_full, y_binary)

@@ -1,5 +1,6 @@
 # Core dependencies for Boosting Trajectory Clustering (BTC)
 numpy>=1.26.0
+scipy>=1.11.0
 pandas>=2.0.0
 scikit-learn>=1.3.0
 matplotlib>=3.7.0
@@ -10,12 +11,16 @@ seaborn>=0.12.0
 xgboost>=2.0.0
 lightgbm>=4.0.0
 
-# Data acquisition
+# Dimensionality reduction / Baselines
+umap-learn>=0.5.4
+
+# Data acquisition & biomedical processing
 openml>=0.14.0
+requests>=2.31.0
+scanpy>=1.9.0
 
 # Genomics-specific
 lifelines>=0.28.0       # Kaplan-Meier survival analysis (TCGA experiment)
 
 # Statistical / Diagnostic tools
 diptest>=0.11.0
-
