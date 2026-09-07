@@ -25,6 +25,7 @@ uv run python experiments/run_scalability_benchmark.py
 Write-Host "`n[5/6] Generating LaTeX tables..."
 uv run python experiments/generate_tables.py
 uv run python experiments/generate_ablation_tables.py
+uv run python experiments/run_diagnostic_audit.py
 
 Write-Host "`n[6/6] Generating PDF figures..."
 uv run python experiments/generate_figures.py

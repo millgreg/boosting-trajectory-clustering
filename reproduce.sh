@@ -33,6 +33,7 @@ echo ""
 echo "[5/6] Generating LaTeX tables..."
 uv run python experiments/generate_tables.py
 uv run python experiments/generate_ablation_tables.py
+uv run python experiments/run_diagnostic_audit.py
 
 echo ""
 echo "[6/6] Generating PDF figures..."
