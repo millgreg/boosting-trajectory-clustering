@@ -20,9 +20,9 @@ try:
     summary = df_adv.groupby('Method_Clean')['ARI_mean'].mean().reset_index().sort_values('ARI_mean', ascending=False)
     
     tex_backend = [
-        '\\begin{table}[h]',
+        '\\begin{table}[htbp]',
         '\\centering',
-        '\\caption{Average ARI across canonical datasets for different clustering backends applied to the boosting trajectory.}',
+        '\\caption{Average ARI across canonical datasets for different clustering backends applied to the boosting trajectory (means computed over 30 independent random seeds).}',
         '\\label{tab:app_backend}',
         '\\begin{tabular}{lc}',
         '\\toprule',
@@ -80,9 +80,9 @@ DISPLAY_NAMES = {
 try:
     df_depth = pd.read_csv(os.path.join(RESULTS_DIR, 'ablation_auto_depth_summary.csv'))
     tex_depth = [
-        '\\begin{table}[h]',
+        '\\begin{table}[htbp]',
         '\\centering',
-        '\\caption{Comparison of fixed Depth-1 decision stumps versus deeper trees (Depths 2, 3, 5).}',
+        '\\caption{Comparison of fixed Depth-1 decision stumps versus deeper trees (Depths 2, 3, 5). Values report the mean Adjusted Rand Index (ARI) computed over 30 independent random seeds; the best mean on each dataset is bolded.}',
         '\\label{tab:app_depth}',
         '\\begin{tabular}{lcccc}',
         '\\toprule',
@@ -131,9 +131,9 @@ try:
     summary = subset.groupby(['Dataset', 'Method'])['ARI'].mean().reset_index()
     
     tex_design = [
-        '\\begin{table}[h]',
+        '\\begin{table}[htbp]',
         '\\centering',
-        '\\caption{Impact of stochastic feature subsampling and trajectory representation type.}',
+        '\\caption{Impact of stochastic feature subsampling and trajectory representation type. Values report the mean Adjusted Rand Index (ARI) computed over 30 independent random seeds; the best mean on each dataset is bolded.}',
         '\\label{tab:app_design}',
         '\\begin{tabular}{lcccc}',
         '\\toprule',
