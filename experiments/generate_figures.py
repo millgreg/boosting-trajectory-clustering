@@ -172,7 +172,7 @@ def fig_depth_ablation():
         # Okabe-Ito colorblind palette for 4 depth levels
         depth_palette = ['#0072B2', '#56B4E9', '#E69F00', '#D55E00']
         
-        fig, ax = plt.subplots(figsize=(10, 5))
+        fig, ax = plt.subplots(figsize=(13, 5))
         sns.barplot(
             data=depth_df, x='Dataset', y='ARI_mean', hue='Tree Depth',
             order=order, palette=depth_palette

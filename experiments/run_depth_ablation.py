@@ -15,8 +15,21 @@ from experiments.dataset_loader import load_dataset
 
 N_SEEDS = 30
 OUT_DIR = os.path.join(os.path.dirname(__file__), 'results')
-# Only a subset of datasets might be traditionally used for the depth ablation
-DATASETS = ['thyroid', 'brca', 'paul15', 'gbmlgg', 'ctg', 'mice', 'har']
+DATASETS = [
+    'arrhythmia',
+    'brca',
+    'ctg',
+    'dermatology',
+    'diabetes',
+    'gbmlgg',
+    'har',
+    'leukemia',
+    'mice',
+    'paul15',
+    'segment',
+    'thyroid',
+    'vehicle'
+]
 
 def run_seed(seed, name, X_full, y_binary, X_target, subtypes, k):
     res = []

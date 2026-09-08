@@ -22,7 +22,7 @@ try:
     tex_backend = [
         '\\begin{table}[htbp]',
         '\\centering',
-        '\\caption{Average ARI across canonical datasets for different clustering backends applied to the boosting trajectory (means computed over 30 independent random seeds).}',
+        '\\caption{Average ARI across all 13 benchmark datasets for different clustering backends applied to the boosting trajectory (means computed over 30 independent random seeds).}',
         '\\label{tab:app_backend}',
         '\\begin{tabular}{lc}',
         '\\toprule',
