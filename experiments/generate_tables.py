@@ -49,42 +49,61 @@ summary = subset.groupby(['Dataset', 'Method'])['ARI'].agg(['mean', 'std']).rese
 
 km = pd.read_csv(os.path.join(RESULTS_DIR, 'kmeans_baselines.csv'))
 km_sub = km[km['Method'].isin(['Baseline_KMeans', 'Baseline_PCA_KMeans', 'Baseline_UMAP_KMeans'])]
-km_sum = km_sub.groupby(['Dataset', 'Method'])['ARI'].mean().reset_index()
+km_summary = km_sub.groupby(['Dataset', 'Method'])['ARI'].agg(['mean', 'std']).reset_index()
 
 tex = []
 tex.append('\\begin{table}[htbp]')
 tex.append('\\centering')
-tex.append('\\caption{Clustering performance (Adjusted Rand Index) across benchmarks. Means and standard deviations computed over 30 random seeds.}')
+tex.append('\\caption{Clustering performance (Adjusted Rand Index) across benchmarks. Means and standard deviations computed over 30 random seeds. The best performance on each dataset is bolded.}')
 tex.append('\\label{tab:main_results}')
-tex.append('\\begin{tabular}{lccccc}')
+tex.append('\\begin{tabular}{l cc ccc}')
 tex.append('\\toprule')
-tex.append('\\textbf{Dataset} & \\textbf{BTC} & \\textbf{RFC} & \\textbf{K-Means} & \\textbf{PCA + K-Means} & \\textbf{UMAP + K-Means} \\\\')
+tex.append('\\textbf{Dataset} & \\multicolumn{2}{c}{\\textbf{Supervised Representations}} & \\multicolumn{3}{c}{\\textbf{Unsupervised Baselines}} \\\\')
+tex.append('\\cmidrule(lr){2-3} \\cmidrule(lr){4-6}')
+tex.append('& \\textbf{BTC} & \\textbf{RFC} & \\textbf{K-Means} & \\textbf{PCA + K-Means} & \\textbf{UMAP + K-Means} \\\\')
 tex.append('\\midrule')
 
 for ds in DATASET_ORDER:
     if ds not in df['Dataset'].values: continue
     btc_row = summary[(summary['Dataset']==ds) & (summary['Method']=='BTC')]
     rfc_row = summary[(summary['Dataset']==ds) & (summary['Method']=='RFC')]
-    k_row = km_sum[(km_sum['Dataset']==ds) & (km_sum['Method']=='Baseline_KMeans')]
-    pk_row = km_sum[(km_sum['Dataset']==ds) & (km_sum['Method']=='Baseline_PCA_KMeans')]
-    u_row = km_sum[(km_sum['Dataset']==ds) & (km_sum['Method']=='Baseline_UMAP_KMeans')]
+    k_row = km_summary[(km_summary['Dataset']==ds) & (km_summary['Method']=='Baseline_KMeans')]
+    pk_row = km_summary[(km_summary['Dataset']==ds) & (km_summary['Method']=='Baseline_PCA_KMeans')]
+    u_row = km_summary[(km_summary['Dataset']==ds) & (km_summary['Method']=='Baseline_UMAP_KMeans')]
     
     if btc_row.empty: continue
+
+    methods_order = [
+        ('BTC', btc_row),
+        ('RFC', rfc_row),
+        ('K-Means', k_row),
+        ('PCA + K-Means', pk_row),
+        ('UMAP + K-Means', u_row)
+    ]
     
-    btc_str = f"{btc_row['mean'].values[0]:.3f} \\pm {btc_row['std'].values[0]:.3f}"
-    rfc_str = f"{rfc_row['mean'].values[0]:.3f} \\pm {rfc_row['std'].values[0]:.3f}" if not rfc_row.empty else '-'
+    stats = {}
+    for m_name, row in methods_order:
+        if not row.empty:
+            stats[m_name] = (row['mean'].values[0], row['std'].values[0])
+        else:
+            stats[m_name] = (np.nan, np.nan)
+            
+    valid_means = [round(v[0], 3) for v in stats.values() if not np.isnan(v[0])]
+    max_mean = max(valid_means) if valid_means else -999.0
     
-    k_val = k_row['ARI'].values[0] if not k_row.empty else 0.0
-    pk_val = pk_row['ARI'].values[0] if not pk_row.empty else 0.0
-    u_val = u_row['ARI'].values[0] if not u_row.empty else 0.0
-    
-    if not rfc_row.empty and btc_row['mean'].values[0] > rfc_row['mean'].values[0]:
-        btc_str = f"\\mathbf{{{btc_str}}}"
-    elif not rfc_row.empty and rfc_row['mean'].values[0] > btc_row['mean'].values[0]:
-        rfc_str = f"\\mathbf{{{rfc_str}}}"
-        
+    row_strs = []
+    for m_name, _ in methods_order:
+        m_val, s_val = stats[m_name]
+        if np.isnan(m_val):
+            row_strs.append('-')
+        else:
+            cell_str = f"{m_val:.3f} \\pm {s_val:.3f}"
+            if round(m_val, 3) == max_mean:
+                cell_str = f"\\mathbf{{{cell_str}}}"
+            row_strs.append(f"${cell_str}$")
+            
     disp_name = DATASET_METADATA[ds]['display']
-    tex.append(f"{disp_name} & ${btc_str}$ & ${rfc_str}$ & {k_val:.3f} & {pk_val:.3f} & {u_val:.3f} \\\\")
+    tex.append(f"{disp_name} & " + " & ".join(row_strs) + " \\\\")
 
 tex.append('\\bottomrule')
 tex.append('\\end{tabular}')
