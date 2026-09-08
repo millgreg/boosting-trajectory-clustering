@@ -86,9 +86,14 @@ def fig_main_results(df):
     fig, ax = plt.subplots(figsize=(13, 6))
     
     # Okabe-Ito / ColorBrewer colorblind-safe palette (5 methods matching Table 2):
-    # BTC = Sea Green, RFC = Royal Blue, PCA = Warm Amber, UMAP = Sky Blue, K-Means = Muted Purple
-    cb_palette = ['#009E73', '#0072B2', '#E69F00', '#56B4E9', '#7570b3']
-    hue_order = ['BTC', 'RFC', 'PCA + K-Means', 'UMAP + K-Means', 'K-Means']
+    method_palette = {
+        'BTC': '#009E73',           # Sea Green
+        'RFC': '#0072B2',           # Royal Blue
+        'K-Means': '#7570b3',       # Muted Purple
+        'PCA + K-Means': '#E69F00', # Warm Amber
+        'UMAP + K-Means': '#56B4E9' # Sky Blue
+    }
+    hue_order = ['BTC', 'RFC', 'K-Means', 'PCA + K-Means', 'UMAP + K-Means']
     
     sns.barplot(
         data=subset, 
@@ -96,7 +101,7 @@ def fig_main_results(df):
         order=order,
         hue_order=hue_order,
         errorbar='sd', ax=ax, err_kws={'linewidth': 1.2}, capsize=0.03,
-        palette=cb_palette
+        palette=method_palette
     )
     
     ax.tick_params(axis='x', rotation=45)
