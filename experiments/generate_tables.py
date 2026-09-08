@@ -43,7 +43,7 @@ DATASET_METADATA = {
 
 df = pd.read_csv(os.path.join(RESULTS_DIR, 'canonical_results_30seeds.csv'))
 subset = df[df['Method'].isin(['BTC_Stochastic_Delta_sqrt_none', 'Baseline_RFC'])].copy()
-subset['Method'] = subset['Method'].replace({'BTC_Stochastic_Delta_sqrt_none': 'BTC (Ours)', 'Baseline_RFC': 'RFC'})
+subset['Method'] = subset['Method'].replace({'BTC_Stochastic_Delta_sqrt_none': 'BTC', 'Baseline_RFC': 'RFC'})
 
 summary = subset.groupby(['Dataset', 'Method'])['ARI'].agg(['mean', 'std']).reset_index()
 
@@ -58,12 +58,12 @@ tex.append('\\caption{Clustering performance (Adjusted Rand Index) across benchm
 tex.append('\\label{tab:main_results}')
 tex.append('\\begin{tabular}{lccccc}')
 tex.append('\\toprule')
-tex.append('\\textbf{Dataset} & \\textbf{BTC (Ours)} & \\textbf{RFC} & \\textbf{K-Means} & \\textbf{PCA + K-Means} & \\textbf{UMAP + K-Means} \\\\')
+tex.append('\\textbf{Dataset} & \\textbf{BTC} & \\textbf{RFC} & \\textbf{K-Means} & \\textbf{PCA + K-Means} & \\textbf{UMAP + K-Means} \\\\')
 tex.append('\\midrule')
 
 for ds in DATASET_ORDER:
     if ds not in df['Dataset'].values: continue
-    btc_row = summary[(summary['Dataset']==ds) & (summary['Method']=='BTC (Ours)')]
+    btc_row = summary[(summary['Dataset']==ds) & (summary['Method']=='BTC')]
     rfc_row = summary[(summary['Dataset']==ds) & (summary['Method']=='RFC')]
     k_row = km_sum[(km_sum['Dataset']==ds) & (km_sum['Method']=='Baseline_KMeans')]
     pk_row = km_sum[(km_sum['Dataset']==ds) & (km_sum['Method']=='Baseline_PCA_KMeans')]

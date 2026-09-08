@@ -65,7 +65,7 @@ def fig_main_results(df):
     print('Generating Fig 2: Main Results...')
     # Extract configs we want to compare
     methods_to_plot = {
-        'BTC_Stochastic_Delta_sqrt_none': 'BTC (Ours)',
+        'BTC_Stochastic_Delta_sqrt_none': 'BTC',
         'Baseline_RFC': 'RFC',
         'Baseline_KMeans': 'K-Means',
         'Baseline_PCA_KMeans': 'PCA + K-Means',
@@ -80,7 +80,7 @@ def fig_main_results(df):
     summary = subset.groupby(['Dataset', 'Method Name'])['ARI'].agg(['mean', 'std']).reset_index()
     
     # Sort datasets by BTC mean ARI
-    btc_means = summary[summary['Method Name'] == 'BTC (Ours)'].set_index('Dataset')['mean'].sort_values(ascending=False)
+    btc_means = summary[summary['Method Name'] == 'BTC'].set_index('Dataset')['mean'].sort_values(ascending=False)
     order = btc_means.index.tolist()
     
     fig, ax = plt.subplots(figsize=(13, 6))
@@ -88,7 +88,7 @@ def fig_main_results(df):
     # Okabe-Ito / ColorBrewer colorblind-safe palette (5 methods matching Table 2):
     # BTC = Sea Green, RFC = Royal Blue, PCA = Warm Amber, UMAP = Sky Blue, K-Means = Muted Purple
     cb_palette = ['#009E73', '#0072B2', '#E69F00', '#56B4E9', '#7570b3']
-    hue_order = ['BTC (Ours)', 'RFC', 'PCA + K-Means', 'UMAP + K-Means', 'K-Means']
+    hue_order = ['BTC', 'RFC', 'PCA + K-Means', 'UMAP + K-Means', 'K-Means']
     
     sns.barplot(
         data=subset, 
@@ -115,9 +115,9 @@ def fig_timing(df):
     # Panel A: Scalability (log-log)
     try:
         scale_df = pd.read_csv(os.path.join(RESULTS_DIR, 'scalability_results.csv'))
-        ax1.plot(scale_df['N'], scale_df['BTC_Time_s'], 'o-', label='BTC (Ours)', color='#009E73', linewidth=2)
-        ax1.plot(scale_df['N'], scale_df['Spectral_Time_s'], 's-', label='RFC Spectral', color='#0072B2', linewidth=2)
-        ax1.plot(scale_df['N'], scale_df['Agglomerative_Time_s'], '^-', label='Agglomerative', color='#E69F00', linewidth=2)
+        ax1.plot(scale_df['N'], scale_df['BTC_Time_s'], 'o-', label='BTC', color='#009E73', linewidth=2)
+        ax1.plot(scale_df['N'], scale_df['Spectral_Time_s'], 's-', label='RFC (Spectral)', color='#0072B2', linewidth=2)
+        ax1.plot(scale_df['N'], scale_df['Agglomerative_Time_s'], '^-', label='RFC (Agglomerative)', color='#E69F00', linewidth=2)
         
         ax1.set_xscale('log')
         ax1.set_yscale('log')

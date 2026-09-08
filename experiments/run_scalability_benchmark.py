@@ -70,7 +70,7 @@ def main():
         )
         btc.fit_predict(X)
         btc_time = time.perf_counter() - t0
-        print(f"  BTC (Ours): {btc_time:.4f}s")
+        print(f"  BTC: {btc_time:.4f}s")
         
         # 2. Measure RFC Agglomerative clustering time (proximity matrix + average linkage)
         try:
