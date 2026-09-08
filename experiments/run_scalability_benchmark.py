@@ -89,25 +89,20 @@ def main():
             agg_time = np.nan
             
         # 3. Measure RFC Spectral clustering time (proximity matrix + spectral graph partition)
-        # Skip or catch for large N where spectral clustering becomes prohibitive or OOM
-        spectral_time = np.nan
-        if n <= 5000:
-            try:
-                t0 = time.perf_counter()
-                rfc_spec = RFC(
-                    rf_model=rf, 
-                    n_clusters=n_clusters, 
-                    clustering_algo='spectral', 
-                    random_state=42
-                )
-                rfc_spec.fit_predict(X)
-                spectral_time = time.perf_counter() - t0
-                print(f"  RFC Spectral: {spectral_time:.4f}s")
-            except Exception as e:
-                print(f"  RFC Spectral failed: {e}")
-                spectral_time = np.nan
-        else:
-            print("  RFC Spectral: Skipped at N=10,000 due to O(N^3) memory/time limit (recorded as NaN)")
+        try:
+            t0 = time.perf_counter()
+            rfc_spec = RFC(
+                rf_model=rf, 
+                n_clusters=n_clusters, 
+                clustering_algo='spectral', 
+                random_state=42
+            )
+            rfc_spec.fit_predict(X)
+            spectral_time = time.perf_counter() - t0
+            print(f"  RFC Spectral: {spectral_time:.4f}s")
+        except Exception as e:
+            print(f"  RFC Spectral failed: {e}")
+            spectral_time = np.nan
             
         records.append({
             'N': n,
