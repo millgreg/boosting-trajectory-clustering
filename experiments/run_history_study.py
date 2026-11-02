@@ -16,7 +16,7 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score, roc_auc_score
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 warnings.filterwarnings('ignore')
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -142,6 +142,17 @@ def run_seed(seed, name, X_full, y, X_target, subtypes, k, idx):
     started = time.perf_counter()
     n_umap = max(1, min(10, X_target.shape[1] - 1, X_target.shape[0] - 2))
     record('UMAP + K-Means', kmeans(umap.UMAP(n_components=n_umap, random_state=seed, n_jobs=1).fit_transform(X_target), k, seed), started)
+
+    # Unsupervised baselines on standardized features
+    scaled = StandardScaler().fit_transform(X_target)
+    started = time.perf_counter()
+    record('K-Means scaled', kmeans(scaled, k, seed), started)
+    started = time.perf_counter()
+    pca_scaled = PCA(n_components=min(scaled.shape), random_state=seed).fit(scaled)
+    keep_scaled = int(np.argmax(np.cumsum(pca_scaled.explained_variance_ratio_) >= 0.90) + 1)
+    record('PCA scaled + K-Means', kmeans(pca_scaled.transform(scaled)[:, :keep_scaled], k, seed), started)
+    started = time.perf_counter()
+    record('UMAP scaled + K-Means', kmeans(umap.UMAP(n_components=n_umap, random_state=seed, n_jobs=1).fit_transform(scaled), k, seed), started)
 
     # Proxy diagnostics that do not use the subtypes
     fraction = goes_left.mean(axis=0)
