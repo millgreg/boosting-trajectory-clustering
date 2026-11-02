@@ -56,11 +56,14 @@ tex.append('\\begin{table}[htbp]')
 tex.append('\\centering')
 tex.append('\\caption{Clustering performance (Adjusted Rand Index) across benchmarks. Means and standard deviations computed over 30 random seeds. The best performance on each dataset is bolded.}')
 tex.append('\\label{tab:main_results}')
+tex.append('\\small')
+tex.append('\\setlength{\\tabcolsep}{4.5pt}')
 tex.append('\\begin{tabular}{l cc ccc}')
 tex.append('\\toprule')
 tex.append('\\textbf{Dataset} & \\multicolumn{2}{c}{\\textbf{Supervised Representations}} & \\multicolumn{3}{c}{\\textbf{Unsupervised Baselines}} \\\\')
 tex.append('\\cmidrule(lr){2-3} \\cmidrule(lr){4-6}')
-tex.append('& \\textbf{BTC} & \\textbf{RFC} & \\textbf{K-Means} & \\textbf{PCA + K-Means} & \\textbf{UMAP + K-Means} \\\\')
+tex.append('& \\textbf{BTC} & \\textbf{RFC} & \\textbf{$K$-Means} & \\textbf{PCA} & \\textbf{UMAP} \\\\')
+tex.append('& & & \\textbf{(Raw)} & \\textbf{+$K$-Means} & \\textbf{+$K$-Means} \\\\')
 tex.append('\\midrule')
 
 for ds in DATASET_ORDER:
@@ -160,17 +163,17 @@ DATASET_DESCRIPTIONS = {
     'brca': {
         'proxy_0': 'ER-Negative',
         'proxy_1': 'ER-Positive',
-        'subtypes': ['Basal-like', 'HER2-enriched', 'Luminal A', 'Luminal B']
+        'subtypes': ['Basal', 'HER2-enriched', 'Luminal A', 'Luminal B']
     },
     'paul15': {
         'proxy_0': 'Non-myeloid lineages',
         'proxy_1': 'Myeloid progenitors',
-        'subtypes': ['Erythrocyte', 'Monocyte', 'Granulocyte', 'Megakaryocyte', 'Neutrophil', 'Progenitor']
+        'subtypes': ['Monocyte', 'Granulocyte', 'Neutrophil', 'Progenitor', 'Megakaryocyte', 'Erythrocyte']
     },
     'gbmlgg': {
         'proxy_0': 'Alive at follow-up',
         'proxy_1': 'Deceased',
-        'subtypes': ['Grade II (LGG)', 'Grade III (LGG)', 'Grade IV (GBM)']
+        'subtypes': ['Grade II', 'Grade III', 'Grade IV']
     },
     'ctg': {
         'proxy_0': 'Normal fetal state',
@@ -180,26 +183,26 @@ DATASET_DESCRIPTIONS = {
     'mice': {
         'proxy_0': 'Control genotype',
         'proxy_1': 'Trisomic (Ts65Dn)',
-        'subtypes': ['Trisomy + Saline', 'Trisomy + Memantine', 'Control + Saline', 'Control + Memantine']
+        'subtypes': ['Trisomy+Saline', 'Trisomy+Memantine', 'Control+Saline', 'Control+Memantine']
     },
     'har': {
-        'proxy_0': 'Static activities (stand/sit/lie)',
-        'proxy_1': 'Dynamic activities (walking)',
+        'proxy_0': 'Static postures',
+        'proxy_1': 'Dynamic walking',
         'subtypes': ['Walking', 'Walking Upstairs', 'Walking Downstairs']
     },
     'diabetes': {
-        'proxy_0': 'No hospital readmission',
-        'proxy_1': 'Hospital readmission',
-        'subtypes': ['Circulatory (ICD 390--459)', 'Respiratory (ICD 460--519)', 'Digestive (ICD 520--579)', 'Diabetes complications (ICD 250)']
+        'proxy_0': 'No readmission',
+        'proxy_1': 'Readmission',
+        'subtypes': ['Circulatory', 'Respiratory', 'Digestive', 'Diabetes Complications']
     },
     'dermatology': {
         'proxy_0': 'Psoriasis (majority)',
         'proxy_1': 'Other skin diseases',
-        'subtypes': ['Seborrheic Keratosis', 'Lichen Planus', 'Pityriasis Rosea', 'Chronic Dermatitis', 'Pityriasis Rubra']
+        'subtypes': ['Seb. Keratosis', 'Lichen Planus', 'Pityriasis Rosea', 'Chr. Dermatitis', 'Pityriasis Rubra']
     },
     'vehicle': {
         'proxy_0': 'Opel silhouette',
-        'proxy_1': 'Other vehicle silhouettes',
+        'proxy_1': 'Other vehicle types',
         'subtypes': ['Saab', 'Bus', 'Van']
     },
     'segment': {
@@ -208,13 +211,13 @@ DATASET_DESCRIPTIONS = {
         'subtypes': ['Sky', 'Foliage', 'Cement', 'Window', 'Path', 'Grass']
     },
     'arrhythmia': {
-        'proxy_0': 'Normal ECG (Class 1)',
+        'proxy_0': 'Normal ECG',
         'proxy_1': 'Cardiac arrhythmia',
-        'subtypes': [f'Type {i}' for i in range(1, 13)]
+        'subtypes': [f'T{i}' for i in range(1, 13)]
     },
     'leukemia': {
-        'proxy_0': 'AML (non-lymphoblastic)',
-        'proxy_1': 'ALL (lymphoblastic)',
+        'proxy_0': 'AML',
+        'proxy_1': 'ALL',
         'subtypes': ['B-cell ALL', 'T-cell ALL']
     }
 }
@@ -222,12 +225,12 @@ DATASET_DESCRIPTIONS = {
 tex_breakdown = [
     '\\begin{table}[htbp]',
     '\\centering',
-    '\\caption{Detailed architectural breakdown of benchmark datasets, proxy classification tasks, and ground-truth cluster distributions across proxy classes.}',
+    '\\caption{Architectural breakdown of benchmark datasets, binary proxy classification tasks, and target subtype distributions. For hierarchical datasets, target clusters reside entirely within the positive proxy class $y=1$ ($N_{\\text{target}}$). For cross-cutting datasets (BRCA, GBMLGG), target subtype membership is reported across proxy classes as ($y=0$ / $y=1$).}',
     '\\label{tab:app_datasets}',
     '\\small',
-    '\\begin{tabular}{lp{2.2cm}p{4.5cm}p{5.5cm}}',
+    '\\begin{tabular}{lp{2.1cm}p{4.3cm}p{6.8cm}}',
     '\\toprule',
-    '\\textbf{Dataset} & \\textbf{Paradigm} & \\textbf{Proxy Classes ($y=0$ vs.\\ $y=1$)} & \\textbf{Target Clusters \\& Class Membership} \\\\',
+    '\\textbf{Dataset} & \\textbf{Paradigm} & \\textbf{Proxy Classes ($y=0$ vs.\\ $y=1$)} & \\textbf{Target Clusters ($K$) \\& Membership} \\\\',
     '\\midrule'
 ]
 
@@ -247,23 +250,27 @@ for ds_key in DATASET_ORDER:
         p1_desc = info.get('proxy_1', 'Class 1')
         sub_names = info.get('subtypes', [f'Subtype {i}' for i in range(k)])
         
-        proxy_str = f"\\textbf{{y=0:}} {p0_desc} ({n0:,}) \\newline \\textbf{{y=1:}} {p1_desc} ({n1:,})".replace(',', '{,}')
+        proxy_str = f"$y=0$: {p0_desc} ({n0:,}) \\newline $y=1$: {p1_desc} ({n1:,})".replace(',', '{,}')
         
         cluster_parts = []
         if is_hier:
             u_subs, counts = np.unique(subtypes, return_counts=True)
-            for idx_sub, cnt in zip(u_subs, counts):
+            sorted_pairs = sorted(zip(u_subs, counts), key=lambda x: x[1], reverse=True)
+            for idx_sub, cnt in sorted_pairs:
                 s_name = sub_names[idx_sub] if idx_sub < len(sub_names) else f"Cluster {idx_sub}"
                 cluster_parts.append(f"{s_name} ({cnt})")
-            cluster_str = "\\textbf{100\\% in y=1:} " + ", ".join(cluster_parts) + " \\newline \\textit{(y=0 contains 0 clusters)}"
+            if ds_key == 'arrhythmia':
+                cluster_str = "12 types: " + ", ".join(cluster_parts)
+            else:
+                cluster_str = ", ".join(cluster_parts)
         else:
             ct = pd.crosstab(y_binary, subtypes)
             for idx_sub in range(k):
                 s_name = sub_names[idx_sub] if idx_sub < len(sub_names) else f"Cluster {idx_sub}"
                 c0 = ct.loc[0, idx_sub] if (0 in ct.index and idx_sub in ct.columns) else 0
                 c1 = ct.loc[1, idx_sub] if (1 in ct.index and idx_sub in ct.columns) else 0
-                cluster_parts.append(f"\\textbf{{{s_name}}}: {c0} in $y=0$, {c1} in $y=1$")
-            cluster_str = "; \\newline ".join(cluster_parts)
+                cluster_parts.append(f"{s_name} ({c0} / {c1})")
+            cluster_str = ", \\newline ".join(cluster_parts)
             
         tex_breakdown.append(f"{meta['display']} & {paradigm} & {proxy_str} & {cluster_str} \\\\")
         tex_breakdown.append('\\midrule')

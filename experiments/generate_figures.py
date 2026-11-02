@@ -169,19 +169,25 @@ def fig_depth_ablation():
         # Sort by canonical dataset order
         order = [DISPLAY_NAMES[d] for d in DATASET_ORDER if DISPLAY_NAMES[d] in depth_df['Dataset'].unique()]
         
-        # Okabe-Ito colorblind palette for 4 depth levels
-        depth_palette = ['#0072B2', '#56B4E9', '#E69F00', '#D55E00']
+        # Harmonized palette: Sea Green for Default BTC Depth-1, sequential blue for deeper trees
+        depth_palette = {
+            'Depth-1 (Stump)': '#009E73',  # Sea Green (Proposed BTC default)
+            'Depth-2': '#56B4E9',          # Sky Blue
+            'Depth-3': '#0072B2',          # Royal Blue
+            'Depth-5': '#00497A'           # Deep Navy Blue
+        }
+        hue_order = ['Depth-1 (Stump)', 'Depth-2', 'Depth-3', 'Depth-5']
         
-        fig, ax = plt.subplots(figsize=(13, 5))
+        fig, ax = plt.subplots(figsize=(13, 5.5))
         sns.barplot(
             data=depth_df, x='Dataset', y='ARI_mean', hue='Tree Depth',
-            order=order, palette=depth_palette
+            order=order, hue_order=hue_order, palette=depth_palette
         )
         ax.tick_params(axis='x', rotation=45)
         ax.set_ylabel('Mean Adjusted Rand Index (ARI)')
         ax.set_xlabel('')
         ax.set_title('Impact of Tree Depth: Stumps vs Deeper Trees')
-        plt.legend(title='')
+        plt.legend(title='', framealpha=0.9)
         
         plt.tight_layout()
         plt.savefig(os.path.join(OUT_DIR, 'fig_depth_ablation.pdf'))
@@ -194,7 +200,29 @@ def fig_design_space(df):
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     
-    # 1. Stochasticity impact
+    # 1. Representation Type (Left - ax1)
+    methods_rep = {
+        'BTC_Stochastic_Delta_sqrt_none': 'Per-Tree Delta',
+        'BTC_Stochastic_Logodds_sqrt': 'Cumulative Log-Odds'
+    }
+    subset_rep = df[df['Method'].isin(methods_rep.keys())].copy()
+    subset_rep['Config'] = subset_rep['Method'].map(methods_rep)
+    
+    rep_palette = {
+        'Per-Tree Delta': '#009E73',    # Sea Green (Default BTC)
+        'Cumulative Log-Odds': '#999999' # Muted Gray (Ablated alternative)
+    }
+    rep_order = ['Per-Tree Delta', 'Cumulative Log-Odds']
+    
+    sns.boxplot(
+        data=subset_rep, x='Config', y='ARI', hue='Config', legend=False, 
+        ax=ax1, order=rep_order, palette=rep_palette
+    )
+    ax1.set_title('Effect of Trajectory Representation')
+    ax1.set_ylabel('ARI (Distribution Across Datasets)')
+    ax1.set_xlabel('')
+    
+    # 2. Stochasticity impact (Right - ax2)
     methods_stoch = {
         'BTC_Base_Delta_none': 'No Subsampling',
         'BTC_Stochastic_Delta_0.1_none': '10% Features',
@@ -203,22 +231,19 @@ def fig_design_space(df):
     subset_stoch = df[df['Method'].isin(methods_stoch.keys())].copy()
     subset_stoch['Config'] = subset_stoch['Method'].map(methods_stoch)
     
-    # Average across all datasets
-    sns.boxplot(data=subset_stoch, x='Config', y='ARI', hue='Config', legend=False, ax=ax1, order=['No Subsampling', '10% Features', 'Sqrt Features'], palette='Blues')
-    ax1.set_title('Effect of Stochastic Feature Subsampling')
-    ax1.set_ylabel('ARI (Distribution Across Datasets)')
-    ax1.set_xlabel('')
-    
-    # 2. Representation Type
-    methods_rep = {
-        'BTC_Stochastic_Delta_sqrt_none': 'Per-Tree Delta',
-        'BTC_Stochastic_Logodds_sqrt': 'Cumulative Log-Odds'
+    stoch_palette = {
+        'No Subsampling': '#999999',   # Muted Gray
+        '10% Features': '#56B4E9',     # Sky Blue
+        'Sqrt Features': '#009E73'     # Sea Green (Default BTC)
     }
-    subset_rep = df[df['Method'].isin(methods_rep.keys())].copy()
-    subset_rep['Config'] = subset_rep['Method'].map(methods_rep)
+    stoch_order = ['No Subsampling', '10% Features', 'Sqrt Features']
     
-    sns.boxplot(data=subset_rep, x='Config', y='ARI', hue='Config', legend=False, ax=ax2, order=['Per-Tree Delta', 'Cumulative Log-Odds'], palette='Greens')
-    ax2.set_title('Effect of Trajectory Representation')
+    # Average across all datasets
+    sns.boxplot(
+        data=subset_stoch, x='Config', y='ARI', hue='Config', legend=False, 
+        ax=ax2, order=stoch_order, palette=stoch_palette
+    )
+    ax2.set_title('Effect of Stochastic Feature Subsampling')
     ax2.set_ylabel('ARI (Distribution Across Datasets)')
     ax2.set_xlabel('')
     

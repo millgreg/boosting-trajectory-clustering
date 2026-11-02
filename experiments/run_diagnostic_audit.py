@@ -74,27 +74,33 @@ def run_diagnostic():
         
     df = pd.DataFrame(rows)
     
-    # Generate LaTeX table
+    # Generate Transposed LaTeX table
     tex = [
         r'\begin{table}[htbp]',
         r'\centering',
-        r'\caption{Diagnostic case study comparing the failure case (HAR) against representative successful datasets (Thyroid and BRCA). While the booster-selected features on HAR retain subtype information ($0.142$ ARI with raw $K$-Means), $100\%$ of trees place $>95\%$ of target samples into identical leaves ($99.4\%$ mean homogeneity), causing trajectory variance collapse.}',
+        r'\small',
+        r'\caption{Diagnostic case study comparing the failure case (HAR) against representative successful datasets (Thyroid and BRCA). While booster-selected features on HAR retain subtype information ($0.142$ ARI with raw $K$-Means), $100\%$ of trees place $>95\%$ of target samples into identical leaves ($99.4\%$ mean homogeneity), causing trajectory variance collapse.}',
         r'\label{tab:app_diagnostic}',
-        r'\begin{tabular}{lcccccc}',
+        r'\begin{tabular}{lccc}',
         r'\toprule',
-        r'\textbf{Dataset} & \textbf{Proxy AUC} & \textbf{Raw $K$-Means} & \textbf{$K$-Means on} & \textbf{Target Leaf} & \textbf{Trees with} & \textbf{BTC Trajectory} \\',
-        r' & & \textbf{(All Features)} & \textbf{Booster Feats} & \textbf{Homogeneity} & \textbf{$>95\%$ Homog.} & \textbf{ARI} \\',
-        r'\midrule'
-    ]
-    
-    for _, r in df.iterrows():
-        tex.append(f"{r['Dataset']} & {r['Proxy_AUC']} & {r['Raw_KM_All']} & {r['Raw_KM_Booster']} & {r['Mean_Homogeneity']} & {r['Trees_gt_95']} & {r['BTC_ARI']} \\\\")
-        
-    tex.extend([
+        r'\textbf{Diagnostic Metric} & ' + ' & '.join([f"\\textbf{{{r['Dataset']}}}" for r in rows]) + r' \\',
+        r'\midrule',
+        r'Proxy ROC-AUC & ' + ' & '.join([r['Proxy_AUC'] for r in rows]) + r' \\',
+        r'\midrule',
+        r'\multicolumn{4}{l}{\textit{Hypothesis 1: Feature Incoherence (Subtype Signal in Selected Features)}} \\',
+        r'Raw $K$-Means ARI (All features) & ' + ' & '.join([r['Raw_KM_All'] for r in rows]) + r' \\',
+        r'$K$-Means ARI (Booster-selected features only) & ' + ' & '.join([r['Raw_KM_Booster'] for r in rows]) + r' \\',
+        r'\midrule',
+        r'\multicolumn{4}{l}{\textit{Hypothesis 2: Intra-Cohort Threshold Collapse (Partition Diversity)}} \\',
+        r'Mean Target Leaf Homogeneity & ' + ' & '.join([r['Mean_Homogeneity'] for r in rows]) + r' \\',
+        r'Trees with $>95\%$ Target Homogeneity & ' + ' & '.join([r['Trees_gt_95'] for r in rows]) + r' \\',
+        r'\midrule',
+        r'\multicolumn{4}{l}{\textit{Downstream Representation Quality}} \\',
+        r'BTC Trajectory ARI & ' + ' & '.join([r['BTC_ARI'] for r in rows]) + r' \\',
         r'\bottomrule',
         r'\end{tabular}',
         r'\end{table}'
-    ])
+    ]
     
     os.makedirs(os.path.dirname(out_table_path), exist_ok=True)
     with open(out_table_path, 'w', encoding='utf-8') as f:
