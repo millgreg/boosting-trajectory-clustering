@@ -9,23 +9,38 @@ LOCAL_DATASETS = ['brca', 'paul15', 'gbmlgg', 'ctg', 'mice', 'diabetes']
 OPENML_DATASETS = ['dermatology', 'vehicle', 'segment', 'arrhythmia', 'leukemia', 'thyroid', 'har']
 ALL_DATASETS = LOCAL_DATASETS + OPENML_DATASETS
 
+MAX_MISSING_FRACTION = 0.5
+
+
+def clean_features(df):
+    """Encode OpenML features without inventing values.
+
+    Columns missing in more than half of the rows are dropped, remaining numeric
+    gaps take the column median, and categorical gaps become all-zero dummies.
+    No labels are used.
+    """
+    df = df.loc[:, df.isna().mean() <= MAX_MISSING_FRACTION].copy()
+    numeric = df.select_dtypes('number').columns
+    df[numeric] = df[numeric].fillna(df[numeric].median())
+    return pd.get_dummies(df, drop_first=True).values.astype(float)
+
+
 def load_dataset(name, base_dir=None):
     if base_dir is None:
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         
     if name in ['dermatology', 'vehicle', 'segment']:
         data = fetch_openml(name=name, version=1, as_frame=True, parser='auto')
-        X_full = pd.get_dummies(data.data, drop_first=True).values.astype(float)
-        X_full = np.nan_to_num(X_full)
+        X_full = clean_features(data.data)
         y_raw = pd.Series(data.target)
         if y_raw.dtype == 'object' or y_raw.dtype.name == 'category':
-            y_raw, _ = pd.factorize(y_raw)
+            y_raw, _ = pd.factorize(y_raw, sort=True)
         else:
             y_raw = pd.to_numeric(y_raw, errors='coerce').values
         y_raw = np.nan_to_num(y_raw)
         
         if len(np.unique(y_raw)) > 2:
-            # The class listed first in the OpenML file becomes y=0; the rest form the target cohort.
+            # The first class in sorted order becomes y=0, independent of row order; the rest form the target cohort.
             y_binary = (y_raw > np.min(y_raw)).astype(int)
         else:
             y_binary = (y_raw == np.max(y_raw)).astype(int)
@@ -36,9 +51,7 @@ def load_dataset(name, base_dir=None):
         
     elif name == 'thyroid':
         data = fetch_openml(data_id=57, as_frame=True, parser='auto')
-        df = data.data.drop(columns=['TBG'], errors='ignore') # TBG is 100% missing
-        X_full = pd.get_dummies(df, drop_first=True).values.astype(float)
-        X_full = np.nan_to_num(X_full)
+        X_full = clean_features(data.data)
         y_str = data.target.astype(str).values
         y_binary = (y_str != 'negative').astype(int)
         target_mask = (y_binary == 1)
@@ -47,8 +60,7 @@ def load_dataset(name, base_dir=None):
 
     elif name == 'arrhythmia':
         data = fetch_openml('arrhythmia', version=1, parser='auto', as_frame=True)
-        X_full = pd.get_dummies(data.data, drop_first=True).values.astype(float)
-        X_full = np.nan_to_num(X_full)
+        X_full = clean_features(data.data)
         y_str = data.target.astype(str).values
         y_binary = (y_str != '1').astype(int)
         target_mask = (y_binary == 1)
@@ -57,8 +69,7 @@ def load_dataset(name, base_dir=None):
         
     elif name == 'leukemia':
         data = fetch_openml(data_id=45092, parser='auto', as_frame=True)
-        X_full = pd.get_dummies(data.data, drop_first=True).values.astype(float)
-        X_full = np.nan_to_num(X_full)
+        X_full = clean_features(data.data)
         y_str = data.target.astype(str).values
         y_binary = np.isin(y_str, ['B-cell', 'T-cell']).astype(int)
         target_mask = (y_binary == 1)

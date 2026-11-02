@@ -196,19 +196,19 @@ DATASET_DESCRIPTIONS = {
         'subtypes': ['Circulatory', 'Respiratory', 'Digestive', 'Diabetes Complications']
     },
     'dermatology': {
-        'proxy_0': 'Seborrheic Dermatitis',
+        'proxy_0': 'Psoriasis',
         'proxy_1': 'Other skin diseases',
-        'subtypes': ['Psoriasis', 'Lichen Planus', 'Chr. Dermatitis', 'Pityriasis Rosea', 'Pityriasis Rubra']
+        'subtypes': ['Seb. Dermatitis', 'Lichen Planus', 'Pityriasis Rosea', 'Chr. Dermatitis', 'Pityriasis Rubra']
     },
     'vehicle': {
-        'proxy_0': 'Van silhouette',
+        'proxy_0': 'Bus silhouette',
         'proxy_1': 'Other vehicle types',
-        'subtypes': ['Saab', 'Bus', 'Opel']
+        'subtypes': ['Opel', 'Saab', 'Van']
     },
     'segment': {
-        'proxy_0': 'Path segment',
+        'proxy_0': 'Brickface segment',
         'proxy_1': 'Other image segments',
-        'subtypes': ['Foliage', 'Sky', 'Grass', 'Brickface', 'Cement', 'Window']
+        'subtypes': ['Cement', 'Foliage', 'Grass', 'Path', 'Sky', 'Window']
     },
     'arrhythmia': {
         'proxy_0': 'Normal ECG',

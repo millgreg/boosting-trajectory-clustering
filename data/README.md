@@ -30,9 +30,9 @@ This single command fetches and constructs all local datasets. Standard tabular 
 | **Mice** | Proteomics | UCI / OpenML ID 40966 (Higuera et al., 2015) | Control Genotype vs. Trisomic (Ts65Dn) | 4 Behavior/Treatment Combinations within Trisomic Mice | Hierarchical |
 | **Thyroid** | Clinical Tabular | UCI / OpenML ID 57 | Normal Thyroid vs. Abnormal Function | 3 Thyroid Pathology Subtypes | Hierarchical |
 | **HAR** | Motion Sensors | UCI / OpenML ID 1478 | Static (sit/stand/lie) vs. Dynamic Activities | 3 Dynamic Walking Subtypes | Hierarchical |
-| **Dermatology** | Clinical Tabular | UCI / OpenML ID 35 | Seborrheic Dermatitis (first-listed class) vs. Other Conditions | 5 Dermatological Disease Subtypes (including Psoriasis) | Hierarchical |
-| **Vehicle** | Silhouette Vision | StatLib / OpenML ID 54 | Van Silhouette (first-listed class) vs. Other Silhouettes | 3 Vehicle Silhouette Types (Saab, Bus, Opel) | Hierarchical |
-| **Segment** | Image Segmentation | StatLib / OpenML ID 36 | Path Segment (first-listed class) vs. Other Segments | 6 Image Subtypes (Foliage, Sky, Grass, Brickface, Cement, Window) | Hierarchical |
+| **Dermatology** | Clinical Tabular | UCI / OpenML ID 35 | Psoriasis (first class in sorted order) vs. Other Conditions | 5 Dermatological Disease Subtypes | Hierarchical |
+| **Vehicle** | Silhouette Vision | StatLib / OpenML ID 54 | Bus Silhouette (first class in sorted order) vs. Other Silhouettes | 3 Vehicle Silhouette Types (Opel, Saab, Van) | Hierarchical |
+| **Segment** | Image Segmentation | StatLib / OpenML ID 36 | Brickface Segment (first class in sorted order) vs. Other Segments | 6 Image Subtypes (Cement, Foliage, Grass, Path, Sky, Window) | Hierarchical |
 | **Arrhythmia** | Cardiac ECG | UCI / OpenML ID 5 | Normal ECG vs. Cardiac Arrhythmia | 12 Arrhythmia Subtypes | Hierarchical |
 | **Leukemia** | Microarray Genomics | Golub et al. (1999) / OpenML ID 45092 | AML (Non-lymphoblastic) vs. ALL | 2 Subtypes: B-cell ALL vs. T-cell ALL | Hierarchical |
 

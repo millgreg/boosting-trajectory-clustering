@@ -35,3 +35,12 @@ def test_deltas_reconstruct_final_margin(fitted):
     model = BTC(booster=gb, n_clusters=2, random_state=0).fit(X)
     baseline = gb._raw_predict_init(X).ravel()
     np.testing.assert_allclose(baseline + model.trajectories_.sum(axis=1), gb.decision_function(X))
+
+
+def test_clean_features_does_not_invent_zero_values():
+    import pandas as pd
+    from experiments.dataset_loader import clean_features
+    frame = pd.DataFrame({'lab': [1.0, 3.0, np.nan, 5.0], 'mostly_missing': [np.nan, np.nan, np.nan, 2.0]})
+    cleaned = clean_features(frame)
+    assert cleaned.shape == (4, 1)
+    assert cleaned[2, 0] == 3.0
