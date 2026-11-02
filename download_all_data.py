@@ -19,7 +19,6 @@ def main():
         os.path.join(data_dir, 'diabetes', 'preprocess_diabetes.py'),
         os.path.join(data_dir, 'scrna', 'preprocess_scrna.py'),
         os.path.join(data_dir, 'tcga', 'preprocess_brca.py'),
-        os.path.join(data_dir, 'tcga', 'update_brca_staging.py'),
         os.path.join(data_dir, 'tcga_gbmlgg', 'preprocess_gbmlgg.py')
     ]
     

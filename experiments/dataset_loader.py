@@ -10,6 +10,9 @@ OPENML_DATASETS = ['dermatology', 'vehicle', 'segment', 'arrhythmia', 'leukemia'
 ALL_DATASETS = LOCAL_DATASETS + OPENML_DATASETS
 
 MAX_MISSING_FRACTION = 0.5
+MAX_CATEGORY_LEVELS = 50
+# Likely recording metadata, a duplicated column, and expert pattern codes. OpenML names these columns V1 to V35.
+CTG_NON_MEASUREMENT_COLUMNS = [0, 1, 2, 4] + list(range(25, 35))
 
 
 def clean_features(df):
@@ -17,12 +20,24 @@ def clean_features(df):
 
     Columns missing in more than half of the rows are dropped, remaining numeric
     gaps take the column median, and categorical gaps become all-zero dummies.
-    No labels are used.
+    Categorical columns with more than MAX_CATEGORY_LEVELS levels, such as IDs and
+    free text, are dropped. No labels are used.
     """
-    df = df.loc[:, df.isna().mean() <= MAX_MISSING_FRACTION].copy()
+    df = df.copy()
+    for column in df.columns:
+        if isinstance(df[column].dtype, pd.SparseDtype):
+            df[column] = df[column].sparse.to_dense()
+    df = df.loc[:, df.isna().mean() <= MAX_MISSING_FRACTION]
+    categorical = df.select_dtypes(exclude='number').columns
+    df = df.drop(columns=[c for c in categorical if df[c].nunique() > MAX_CATEGORY_LEVELS]).copy()
     numeric = df.select_dtypes('number').columns
     df[numeric] = df[numeric].fillna(df[numeric].median())
     return pd.get_dummies(df, drop_first=True).values.astype(float)
+
+
+def primary_tumor_mask(sample_ids):
+    """Keep TCGA primary tumors, whose barcode sample type is 01."""
+    return np.array([str(s).split('-')[3].startswith('01') for s in sample_ids])
 
 
 def load_dataset(name, base_dir=None):
@@ -101,9 +116,10 @@ def load_dataset(name, base_dir=None):
             ds = pickle.load(f)
             
         if name == 'gbmlgg':
-            X_full = ds['X']
-            y_binary = ds['y']
-            subtypes = ds['subtypes']
+            primary = primary_tumor_mask(ds['sample_ids'])
+            X_full = ds['X'][primary]
+            y_binary = ds['y'][primary]
+            subtypes = ds['subtypes'][primary]
             X_target = X_full  # Subtypes defined on the whole dataset here
         else:
             subtypes = ds['subtypes']
@@ -111,6 +127,18 @@ def load_dataset(name, base_dir=None):
             X_full = ds['full_X_raw']
             y_binary = ds['full_y']
             full_sample_ids = ds['full_sample_ids']
+
+            if name == 'brca':
+                primary = primary_tumor_mask(full_sample_ids)
+                X_full, y_binary = X_full[primary], y_binary[primary]
+                subtypes, sample_ids = subtypes[primary], sample_ids[primary]
+                full_sample_ids = full_sample_ids[primary]
+            elif name == 'paul15':
+                library_size = X_full.sum(axis=1, keepdims=True)
+                X_full = np.log1p(X_full / library_size * np.median(library_size))
+            elif name == 'ctg':
+                keep = np.setdiff1d(np.arange(X_full.shape[1]), CTG_NON_MEASUREMENT_COLUMNS)
+                X_full = X_full[:, keep]
             
             target_set = set(sample_ids)
             target_idx_in_full = [i for i, sid in enumerate(full_sample_ids) if sid in target_set]

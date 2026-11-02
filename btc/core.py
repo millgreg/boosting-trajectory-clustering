@@ -212,6 +212,10 @@ class BTC(BaseEstimator, ClusterMixin):
         if self.booster is None:
             raise ValueError("A fitted booster model must be provided.")
 
+        n_classes = len(getattr(self.booster, 'classes_', (0, 1)))
+        if n_classes > 2:
+            raise ValueError(f"BTC supports binary proxy tasks only, but the booster has {n_classes} classes.")
+
         # 1. Extract Trajectory Representation
         if self.representation == 'cumul_proba':
             R = extract_staged_predictions(self.booster, X)
@@ -362,6 +366,9 @@ class MultiTaskBTC(BaseEstimator, ClusterMixin):
 
         trajectories = []
         for booster in self.boosters:
+            n_classes = len(getattr(booster, 'classes_', (0, 1)))
+            if n_classes > 2:
+                raise ValueError(f"MultiTaskBTC supports binary proxy tasks only, but a booster has {n_classes} classes.")
             if self.representation == 'cumul_logodds':
                 R = extract_staged_decision_function(booster, X)
             elif self.representation == 'per_tree_delta':

@@ -44,3 +44,22 @@ def test_clean_features_does_not_invent_zero_values():
     cleaned = clean_features(frame)
     assert cleaned.shape == (4, 1)
     assert cleaned[2, 0] == 3.0
+
+
+def test_multiclass_booster_is_rejected():
+    X, y = make_classification(200, 12, n_informative=6, n_classes=3, random_state=0)
+    gb = GradientBoostingClassifier(n_estimators=5, max_depth=1, random_state=0).fit(X, y)
+    with pytest.raises(ValueError, match='binary'):
+        BTC(booster=gb, n_clusters=3).fit(X)
+
+
+def test_clean_features_drops_id_like_columns():
+    import pandas as pd
+    from experiments.dataset_loader import clean_features
+    frame = pd.DataFrame({'value': np.arange(60.0), 'identifier': [f'id{i}' for i in range(60)], 'group': ['a', 'b'] * 30})
+    assert clean_features(frame).shape == (60, 2)
+
+
+def test_primary_tumor_mask():
+    from experiments.dataset_loader import primary_tumor_mask
+    assert primary_tumor_mask(['TCGA-AA-0001-01', 'TCGA-AA-0001-11', 'TCGA-AA-0002-06']).tolist() == [True, False, False]
