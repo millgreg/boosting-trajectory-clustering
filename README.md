@@ -1,6 +1,6 @@
 # Boosting Trajectories for Supervised Clustering
 
-This repository contains the code to reproduce the experiments and figures for the paper **Boosting Trajectories for Supervised Clustering: Fast Subtype Discovery without Proximity Matrices**.
+This repository contains the code to reproduce the experiments and figures for the paper **Boosting Trajectories as Representations for Supervised Clustering**.
 
 ## Overview
 
@@ -8,7 +8,7 @@ This work discovers latent subtypes within a supervised classification task by c
 
 ## Requirements
 
-Dependencies are managed using `uv` and standard `requirements.txt`.
+Dependencies are managed using `uv` and standard `requirements.txt`, which pins the versions used for the reported results. `requirements-lock.txt` records the complete environment (Python 3.14).
 
 ```bash
 pip install -r requirements.txt
@@ -63,7 +63,10 @@ bash reproduce.sh
 5. Compiles the LaTeX tables (`experiments/generate_tables.py`, `experiments/generate_ablation_tables.py`).
 6. Renders the PDF figures to `paper/figures/` (`experiments/generate_figures.py`).
 
-After running the script, simply compile the LaTeX document in `paper/main.tex` to view the fully populated manuscript.
+The table step also runs the diagnostic audit, the representation geometry audit, and the statistical tests (`experiments/run_diagnostic_audit.py`, `experiments/run_representation_audit.py`, `experiments/run_statistical_tests.py`).
+
+The manuscript is kept outside this repository, so the scripts create `paper/tables/` and `paper/figures/` when they are absent. Run the regression tests with `python -m pytest tests` after installing `pytest`.
+
 
 ## Project Structure
 
@@ -85,6 +88,9 @@ Miller_BoostingCluster/
 │   ├── run_backend_ablation.py
 │   ├── run_scalability_benchmark.py
 │   ├── run_quick_verification.py
+│   ├── run_diagnostic_audit.py
+│   ├── run_representation_audit.py
+│   ├── run_statistical_tests.py
 │   ├── generate_tables.py
 │   ├── generate_ablation_tables.py
 │   └── generate_figures.py
@@ -95,8 +101,10 @@ Miller_BoostingCluster/
 │   ├── references.bib
 │   ├── tables/                 # Auto-generated LaTeX tables
 │   └── figures/                # Auto-generated PDF figures
+├── tests/                      # Regression tests
 ├── download_all_data.py        # Helper to fetch biomedical data
-├── requirements.txt            # Python dependencies
+├── requirements.txt            # Pinned Python dependencies
+├── requirements-lock.txt       # Complete pinned environment
 ├── setup.py                    # Package build configuration
 ├── reproduce.sh                # Linux/macOS reproduction entry point
 └── reproduce.ps1               # Windows reproduction entry point

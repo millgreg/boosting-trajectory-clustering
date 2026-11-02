@@ -16,5 +16,5 @@ setup(
         'matplotlib>=3.7.0',
         'seaborn>=0.12.0',
     ],
-    python_requires='>=3.8',
+    python_requires='>=3.9',
 )

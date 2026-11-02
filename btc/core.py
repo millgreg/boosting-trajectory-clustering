@@ -153,7 +153,7 @@ class BTC(BaseEstimator, ClusterMixin):
     def __init__(self, booster: Optional[Any] = None, n_clusters: int = 3, representation: str = 'per_tree_delta',
                  clustering_algo: str = 'kmeans', similarity: str = 'rbf', normalization: str = 'none', 
                  trajectory_pca: Optional[int] = None, trajectory_umap: Optional[int] = None, windowed: bool = False, window_size: int = 10, window_stride: int = 5,
-                 consensus_runs: Optional[int] = None, random_state: Optional[int] = None, target_class: int = 1):
+                 consensus_runs: Optional[int] = None, random_state: Optional[int] = None):
         """
         Boosting Trajectory Clustering (BTC)
         
@@ -170,7 +170,6 @@ class BTC(BaseEstimator, ClusterMixin):
         - window_size: Size of sliding window (default: 10)
         - window_stride: Stride of sliding window (default: 5)
         - consensus_runs: Optional number of KMeans runs for consensus clustering (default: None)
-        - target_class: The class label of the samples being clustered (default: 1)
         """
         self.booster = booster
         self.n_clusters = n_clusters
@@ -285,7 +284,7 @@ class BTC(BaseEstimator, ClusterMixin):
                     n_clusters=self.n_clusters, metric='precomputed', linkage='average')
                 self.labels_ = clusterer.fit_predict(1.0 - C)
             else:
-                clusterer = KMeans(n_clusters=self.n_clusters, n_init=20, random_state=self.random_state)
+                clusterer = KMeans(n_clusters=self.n_clusters, n_init=10, random_state=self.random_state)
                 self.labels_ = clusterer.fit_predict(R)
             
         elif self.clustering_algo == 'agglomerative':
@@ -413,7 +412,7 @@ class MultiTaskBTC(BaseEstimator, ClusterMixin):
             clusterer = AgglomerativeClustering(n_clusters=self.n_clusters, metric='precomputed', linkage='average')
             self.labels_ = clusterer.fit_predict(1.0 - C)
         else:
-            clusterer = KMeans(n_clusters=self.n_clusters, n_init=20, random_state=self.random_state)
+            clusterer = KMeans(n_clusters=self.n_clusters, n_init=10, random_state=self.random_state)
             self.labels_ = clusterer.fit_predict(R_multi)
             
         return self

@@ -26,6 +26,8 @@ Write-Host "`n[5/6] Generating LaTeX tables..."
 uv run python experiments/generate_tables.py
 uv run python experiments/generate_ablation_tables.py
 uv run python experiments/run_diagnostic_audit.py
+uv run python experiments/run_representation_audit.py
+uv run python experiments/run_statistical_tests.py
 
 Write-Host "`n[6/6] Generating PDF figures..."
 uv run python experiments/generate_figures.py

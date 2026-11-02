@@ -25,6 +25,7 @@ def load_dataset(name, base_dir=None):
         y_raw = np.nan_to_num(y_raw)
         
         if len(np.unique(y_raw)) > 2:
+            # The class listed first in the OpenML file becomes y=0; the rest form the target cohort.
             y_binary = (y_raw > np.min(y_raw)).astype(int)
         else:
             y_binary = (y_raw == np.max(y_raw)).astype(int)

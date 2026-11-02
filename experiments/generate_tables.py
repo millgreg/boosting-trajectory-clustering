@@ -166,9 +166,9 @@ DATASET_DESCRIPTIONS = {
         'subtypes': ['Basal', 'HER2-enriched', 'Luminal A', 'Luminal B']
     },
     'paul15': {
-        'proxy_0': 'Non-myeloid lineages',
-        'proxy_1': 'Myeloid progenitors',
-        'subtypes': ['Monocyte', 'Granulocyte', 'Neutrophil', 'Progenitor', 'Megakaryocyte', 'Erythrocyte']
+        'proxy_0': 'Non-erythroid lineages',
+        'proxy_1': 'Erythroid lineage',
+        'subtypes': ['1Ery', '2Ery', '3Ery', '4Ery', '5Ery', '6Ery']
     },
     'gbmlgg': {
         'proxy_0': 'Alive at follow-up',
@@ -183,7 +183,7 @@ DATASET_DESCRIPTIONS = {
     'mice': {
         'proxy_0': 'Control genotype',
         'proxy_1': 'Trisomic (Ts65Dn)',
-        'subtypes': ['Trisomy+Saline', 'Trisomy+Memantine', 'Control+Saline', 'Control+Memantine']
+        'subtypes': ['CS+Memantine', 'CS+Saline', 'SC+Memantine', 'SC+Saline']
     },
     'har': {
         'proxy_0': 'Static postures',
@@ -196,24 +196,24 @@ DATASET_DESCRIPTIONS = {
         'subtypes': ['Circulatory', 'Respiratory', 'Digestive', 'Diabetes Complications']
     },
     'dermatology': {
-        'proxy_0': 'Psoriasis (majority)',
+        'proxy_0': 'Seborrheic Dermatitis',
         'proxy_1': 'Other skin diseases',
-        'subtypes': ['Seb. Keratosis', 'Lichen Planus', 'Pityriasis Rosea', 'Chr. Dermatitis', 'Pityriasis Rubra']
+        'subtypes': ['Psoriasis', 'Lichen Planus', 'Chr. Dermatitis', 'Pityriasis Rosea', 'Pityriasis Rubra']
     },
     'vehicle': {
-        'proxy_0': 'Opel silhouette',
+        'proxy_0': 'Van silhouette',
         'proxy_1': 'Other vehicle types',
-        'subtypes': ['Saab', 'Bus', 'Van']
+        'subtypes': ['Saab', 'Bus', 'Opel']
     },
     'segment': {
-        'proxy_0': 'Brickface segment',
+        'proxy_0': 'Path segment',
         'proxy_1': 'Other image segments',
-        'subtypes': ['Sky', 'Foliage', 'Cement', 'Window', 'Path', 'Grass']
+        'subtypes': ['Foliage', 'Sky', 'Grass', 'Brickface', 'Cement', 'Window']
     },
     'arrhythmia': {
         'proxy_0': 'Normal ECG',
         'proxy_1': 'Cardiac arrhythmia',
-        'subtypes': [f'T{i}' for i in range(1, 13)]
+        'subtypes': [f'C{c}' for c in (10, 14, 15, 16, 2, 3, 4, 5, 6, 7, 8, 9)]
     },
     'leukemia': {
         'proxy_0': 'AML',
@@ -225,7 +225,7 @@ DATASET_DESCRIPTIONS = {
 tex_breakdown = [
     '\\begin{table}[htbp]',
     '\\centering',
-    '\\caption{Architectural breakdown of benchmark datasets, binary proxy classification tasks, and target subtype distributions. For hierarchical datasets, target clusters reside entirely within the positive proxy class $y=1$ ($N_{\\text{target}}$). For cross-cutting datasets (BRCA, GBMLGG), target subtype membership is reported across proxy classes as ($y=0$ / $y=1$).}',
+    '\\caption{Architectural breakdown of benchmark datasets, binary proxy classification tasks, and target subtype distributions. For hierarchical datasets, target clusters reside entirely within the positive proxy class $y=1$ ($N_{\\text{target}}$). For cross-cutting datasets (BRCA, GBMLGG), target subtype membership is reported across proxy classes as ($y=0$ / $y=1$). Arrhythmia subtypes use the UCI class codes; Mice subtypes combine behavior (CS: context-shock, SC: shock-context) with treatment; Paul15 subtypes are the published erythroid cluster labels.}',
     '\\label{tab:app_datasets}',
     '\\small',
     '\\begin{tabular}{lp{2.1cm}p{4.3cm}p{6.8cm}}',
@@ -260,7 +260,7 @@ for ds_key in DATASET_ORDER:
                 s_name = sub_names[idx_sub] if idx_sub < len(sub_names) else f"Cluster {idx_sub}"
                 cluster_parts.append(f"{s_name} ({cnt})")
             if ds_key == 'arrhythmia':
-                cluster_str = "12 types: " + ", ".join(cluster_parts)
+                cluster_str = "12 classes: " + ", ".join(cluster_parts)
             else:
                 cluster_str = ", ".join(cluster_parts)
         else:
