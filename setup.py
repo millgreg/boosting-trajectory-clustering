@@ -4,7 +4,8 @@ setup(
     name='btc-clustering',
     version='0.2.0',
     description='Boosting Trajectory Clustering (BTC)',
-    author='Miller et al.',
+    author='Gregor Miller',
+    license='MIT',
     packages=find_packages(include=['btc', 'btc.*', 'baselines', 'baselines.*']),
     install_requires=[
         'numpy>=1.26.0',

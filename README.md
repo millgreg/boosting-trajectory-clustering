@@ -52,3 +52,7 @@ data/                   Download and preprocessing scripts for the local dataset
 experiments/            Study scripts, analyses, and the frozen confirmation protocol
 tests/                  Regression tests
 ```
+
+## License
+
+MIT; see `LICENSE`.
