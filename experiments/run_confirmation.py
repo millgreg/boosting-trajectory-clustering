@@ -25,7 +25,7 @@ from btc.core import extract_raw_init, extract_staged_decision_function
 from experiments.dataset_loader import clean_features
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-LIST = os.path.join(ROOT, 'paper', 'protocol', 'confirmation_datasets.csv')
+LIST = os.path.join(ROOT, 'experiments', 'confirmation', 'confirmation_datasets.csv')
 OUT = os.path.join(ROOT, 'experiments', 'results', 'confirmation_results.csv')
 N_GROUPINGS, N_SEEDS, MAX_ROWS, MIN_CLASS, SEED = 3, 5, 20000, 5, 20261103
 # Frozen from development Part A; set before the protocol is frozen.

@@ -1,111 +1,54 @@
 # Boosting Trajectories for Supervised Clustering
 
-This repository contains the code to reproduce the experiments and figures for the paper **Boosting Trajectories as Representations for Supervised Clustering**.
+Code for a study of proxy-guided subtype discovery: using a coarse binary label (the proxy) to find finer subtypes within a target cohort. It includes Boosting Trajectory Clustering (BTC), which clusters samples by the per-tree margin updates of a gradient boosting classifier, and compares it with Random Forest Clustering (RFC), SHAP-based clustering, random-forest leaf embeddings, and unsupervised baselines.
 
-## Overview
+## Main findings
 
-This work discovers latent subtypes within a supervised classification task by clustering the *learning trajectories* of gradient boosting models. Instead of relying on scalar final predictions or spatial features, we extract the sequence of per-tree margin updates across boosting rounds and cluster these temporal trajectories to reveal hidden subpopulation structure in $O(N)$ time.
+- On 40 held-out OpenML datasets with random class groupings, BTC performed on par with standardized TreeSHAP clustering and UMAP (mean ARI 0.200, 0.205 and 0.204). Spectral RFC scored highest (0.252, exploratory).
+- On TCGA PanCanAtlas data, plain K-Means outperformed every supervised tree representation, both for cancer types within organ systems and for molecular subtypes within cancer types. Proxies measured within a cancer type (stage, grade, survival and others) did not help either, except hormone-receptor status in breast cancer.
+- Boosting histories carry little beyond the final margin and the tree splits: pseudo-residuals, learning speed, and tree order add little or nothing.
+- Tree-based representations are unaffected by feature scaling, whereas K-Means results change substantially between raw and standardized features.
 
-## Requirements
+Confirmatory analyses followed a protocol frozen before the run; see `experiments/confirmation/PROTOCOL.md`.
 
-Dependencies are managed using `uv` and standard `requirements.txt`, which pins the versions used for the reported results. `requirements-lock.txt` records the complete environment (Python 3.14).
+## Installation
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Quick Start (Usage)
+`requirements.txt` pins the versions used for the reported results, and `requirements-lock.txt` records the full environment (Python 3.14). Install `pytest` to run the tests with `python -m pytest tests`.
 
-BTC is designed to be fully compatible with the `scikit-learn` API. You can drop it into any existing pipeline where you would normally use `KMeans`.
+## Usage
 
 ```python
 from sklearn.ensemble import GradientBoostingClassifier
 from btc import BTC
 
-# 1. Train a Gradient Booster on a coarse binary proxy task
-gb = GradientBoostingClassifier(n_estimators=100, max_depth=1, max_features='sqrt')
-gb.fit(X_full, y_coarse_proxy)
-
-# 2. Extract trajectory representations and cluster the target cohort
-btc = BTC(booster=gb, n_clusters=4, representation='per_tree_delta')
-predicted_subtypes = btc.fit_predict(X_target)
+booster = GradientBoostingClassifier(n_estimators=100, max_depth=1, max_features='sqrt')
+booster.fit(X_full, y_proxy)
+labels = BTC(booster=booster, n_clusters=4).fit_predict(X_target)
 ```
 
-## Data Preparation
+`baselines.FactorizedRFC` computes spectral Random Forest Clustering exactly without forming the N x N proximity matrix.
 
-Before running the full reproduction suite, prepare the biomedical datasets by executing:
+## Reproducing the results
 
-```bash
-uv run python download_all_data.py
-```
+`reproduce.sh` (Linux/macOS) and `reproduce.ps1` (Windows) run every step in order:
 
-This automatically downloads and preprocesses the complex biomedical datasets (TCGA BRCA, TCGA GBMLGG, Paul15, CTG, Mice, Diabetes) from their official sources into `data/`. For complete dataset provenance, ICD-9 diagnostic groupings, and citations, see [data/README.md](data/README.md).
+1. **Data:** `download_all_data.py` prepares the local biomedical benchmarks, and `data/tcga_pancan/download_pancan.py` fetches the TCGA PanCanAtlas files. OpenML datasets download automatically.
+2. **Development studies** on the 13 benchmarks and OpenML-CC18: `run_history_study.py`, `run_default_sensitivity.py`, `run_proxy_contrast.py`, and `run_dev_followups.py`.
+3. **Confirmation** on 40 held-out datasets: `run_confirmation.py`, analysed by `analyze_confirmation.py`, plus the exploratory `run_confirmation_rfc.py`.
+4. **TCGA studies:** `run_tcga_hierarchy.py` and `run_tcga_within_cohort.py`, each with its `analyze_` script.
 
-## Reproducing the Paper
+Each analysis plan is written in the docstring of its run script and was committed before the corresponding results existed. Results are written to `experiments/results/`.
 
-To reproduce the entire paper (including running all baselines, ablations, and regenerating the LaTeX tables and PDF figures from scratch), we provide a single entry point script. 
-
-### Running on Windows
-```powershell
-.\reproduce.ps1
-```
-
-### Running on Linux/macOS
-```bash
-bash reproduce.sh
-```
-
-**What this script does:**
-1. Runs the canonical BTC and RFC benchmarks (`experiments/run_canonical_benchmark.py`).
-2. Computes unsupervised baselines (K-Means, PCA, UMAP) (`experiments/run_unsupervised_baselines.py`).
-3. Executes the tree depth ablation (`experiments/run_depth_ablation.py`).
-4. Executes the clustering backend ablation & scalability benchmarks (`experiments/run_backend_ablation.py`, `experiments/run_scalability_benchmark.py`).
-5. Compiles the LaTeX tables (`experiments/generate_tables.py`, `experiments/generate_ablation_tables.py`).
-6. Renders the PDF figures to `paper/figures/` (`experiments/generate_figures.py`).
-
-The table step also runs the diagnostic audit, the representation geometry audit, and the statistical tests (`experiments/run_diagnostic_audit.py`, `experiments/run_representation_audit.py`, `experiments/run_statistical_tests.py`).
-
-The manuscript is kept outside this repository, so the scripts create `paper/tables/` and `paper/figures/` when they are absent. Run the regression tests with `python -m pytest tests` after installing `pytest`.
-
-
-## Project Structure
+## Project structure
 
 ```
-Miller_BoostingCluster/
-├── btc/                        # Core BTC algorithm library
-│   ├── __init__.py
-│   └── core.py
-├── baselines/                  # Benchmark baselines
-│   ├── __init__.py
-│   └── rfc.py                  # Random Forest Clustering (RFC)
-├── data/                       # Biomedical dataset loaders & caches
-│   └── README.md
-├── experiments/                # Experiment & evaluation suite
-│   ├── dataset_loader.py       # Data fetching for all 13 benchmarks
-│   ├── run_canonical_benchmark.py
-│   ├── run_unsupervised_baselines.py
-│   ├── run_depth_ablation.py
-│   ├── run_backend_ablation.py
-│   ├── run_scalability_benchmark.py
-│   ├── run_quick_verification.py
-│   ├── run_diagnostic_audit.py
-│   ├── run_representation_audit.py
-│   ├── run_statistical_tests.py
-│   ├── generate_tables.py
-│   ├── generate_ablation_tables.py
-│   └── generate_figures.py
-├── paper/                      # TMLR LaTeX source (gitignored)
-│   ├── main.tex
-│   ├── experiments.tex
-│   ├── appendix.tex
-│   ├── references.bib
-│   ├── tables/                 # Auto-generated LaTeX tables
-│   └── figures/                # Auto-generated PDF figures
-├── tests/                      # Regression tests
-├── download_all_data.py        # Helper to fetch biomedical data
-├── requirements.txt            # Pinned Python dependencies
-├── requirements-lock.txt       # Complete pinned environment
-├── setup.py                    # Package build configuration
-├── reproduce.sh                # Linux/macOS reproduction entry point
-└── reproduce.ps1               # Windows reproduction entry point
+btc/                    BTC and trajectory extraction (scikit-learn, XGBoost, LightGBM)
+baselines/              Dense and factorized spectral Random Forest Clustering
+data/                   Download and preprocessing scripts for the local datasets
+experiments/            Study scripts, analyses, and the frozen confirmation protocol
+tests/                  Regression tests
 ```

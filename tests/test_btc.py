@@ -78,3 +78,19 @@ def test_factorized_rfc_matches_dense_spectral_embedding():
     q1, _ = np.linalg.qr(reference)
     q2, _ = np.linalg.qr(fast.embedding_)
     assert np.linalg.svd(q1.T @ q2, compute_uv=False).min() > 0.999
+
+
+@pytest.mark.parametrize('library', ['xgboost', 'lightgbm'])
+def test_other_boosters_reconstruct_final_margin(library):
+    X, y = make_classification(300, 12, n_informative=6, random_state=0)
+    if library == 'xgboost':
+        from xgboost import XGBClassifier
+        model = XGBClassifier(n_estimators=10, max_depth=1, verbosity=0).fit(X, y)
+        final = model.predict(X, output_margin=True)
+    else:
+        from lightgbm import LGBMClassifier
+        model = LGBMClassifier(n_estimators=10, max_depth=1, verbose=-1).fit(X, y)
+        final = model.predict(X, raw_score=True)
+    btc = BTC(booster=model, n_clusters=2, random_state=0).fit(X)
+    from btc import extract_raw_init
+    np.testing.assert_allclose(extract_raw_init(model, X) + btc.trajectories_.sum(axis=1), final, rtol=1e-4, atol=1e-4)

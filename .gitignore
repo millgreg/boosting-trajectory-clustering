@@ -1,7 +1,6 @@
 # Ignore publication manuscript and generated documents
 paper/
-# Ignore legacy scripts and old scratch folders
-archive/
+# Ignore scratch folders
 scratch/
 # Python standard ignores
 __pycache__/
@@ -45,5 +44,6 @@ Thumbs.db
 *.csv
 data/tcga/BRCA_clinicalMatrix
 data/tcga_gbmlgg/GBMLGG_clinicalMatrix
-# Ignore internal documentation and drafts
-docs/
+data/tcga_pancan/*
+!data/tcga_pancan/download_pancan.py
+data/paul15/

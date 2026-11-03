@@ -1,10 +1,9 @@
 """
-Boosting Trajectory Clustering (BTC)
-A linear-time representation learning framework for supervised clustering using gradient boosting trajectories.
+Boosting Trajectory Clustering (BTC).
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
-from .core import BTC, MultiTaskBTC, auto_select_depth
+from .core import BTC, extract_raw_init, extract_staged_decision_function
 
-__all__ = ['BTC', 'MultiTaskBTC', 'auto_select_depth']
+__all__ = ["BTC", "extract_raw_init", "extract_staged_decision_function"]

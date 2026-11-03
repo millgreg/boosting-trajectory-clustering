@@ -67,9 +67,14 @@ data/
 ├── scrna/
 │   └── preprocess_scrna.py       # Paul15 scanpy downloader and preprocessor
 ├── tcga/
-│   ├── preprocess_brca.py        # UCSC Xena TCGA BRCA downloader and preprocessor
-│   └── update_brca_staging.py    # GDC clinical staging annotator
+│   └── preprocess_brca.py        # UCSC Xena TCGA BRCA downloader and preprocessor
 ├── tcga_gbmlgg/
 │   └── preprocess_gbmlgg.py      # UCSC Xena TCGA GBMLGG downloader and preprocessor
+├── tcga_pancan/
+│   └── download_pancan.py        # UCSC Xena PanCanAtlas expression, subtypes, and clinical data
 └── thyroid/                      # Fetched on-the-fly via dataset_loader.py
 ```
+
+## TCGA PanCanAtlas
+
+The TCGA hierarchy and within-cohort studies use batch-corrected PanCanAtlas RNA-seq, the published molecular subtypes (`Subtype_Selected`), and the clinical supplement, all from the public UCSC Xena PanCanAtlas hub. Run `python data/tcga_pancan/download_pancan.py` to fetch them.
