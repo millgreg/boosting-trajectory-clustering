@@ -94,3 +94,31 @@ def test_other_boosters_reconstruct_final_margin(library):
     btc = BTC(booster=model, n_clusters=2, random_state=0).fit(X)
     from btc import extract_raw_init
     np.testing.assert_allclose(extract_raw_init(model, X) + btc.trajectories_.sum(axis=1), final, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.parametrize('variant', ['breiman', 'oob', 'rfgap'])
+def test_proximity_factorization_matches_brute_force(variant):
+    from sklearn.ensemble import RandomForestClassifier
+    from baselines import rf_proximities as rp
+    X, y = make_classification(120, 6, n_informative=4, random_state=2)
+    forest = RandomForestClassifier(n_estimators=15, random_state=0).fit(X, y)
+    target = np.where(y == 1)[0]
+    leaves = forest.apply(X)
+    counts = np.stack([np.bincount(s, minlength=len(X)) for s in forest.estimators_samples_], axis=1)
+    oob = counts == 0
+    n = len(target)
+    expected = np.zeros((n, n))
+    for a, i in enumerate(target):
+        for b, j in enumerate(target):
+            same = leaves[i] == leaves[j]
+            if variant == 'breiman':
+                expected[a, b] = same.mean()
+            elif variant == 'oob':
+                expected[a, b] = (oob[i] & oob[j] & same).sum() / np.sqrt(oob[i].sum() * oob[j].sum())
+            else:
+                total = sum(counts[j, t] / counts[leaves[:, t] == leaves[i, t], t].sum()
+                            for t in np.where(oob[i] & same)[0])
+                expected[a, b] = total / oob[i].sum()
+    if variant == 'rfgap':
+        expected = (expected + expected.T) / 2
+    np.testing.assert_allclose(rp.dense_proximity(forest, X, target, variant), expected, atol=1e-12)
