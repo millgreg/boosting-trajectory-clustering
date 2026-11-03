@@ -57,7 +57,11 @@ def select(Z_for_k, ks, seed):
         labels_by_k[k] = labels
         if len(np.unique(labels)) < 2:
             continue
-        s = silhouette_score(Z, labels, sample_size=min(SILHOUETTE_SAMPLE, len(Z)), random_state=seed)
+        try:
+            s = silhouette_score(Z, labels, sample_size=min(SILHOUETTE_SAMPLE, len(Z)), random_state=seed)
+        except ValueError:
+            # The subsample can contain a single cluster when one cluster dominates; skip this k.
+            continue
         if s > best:
             best, best_k = s, k
     return best_k, labels_by_k
@@ -111,9 +115,27 @@ def tasks():
             yield X_train, y, target, labels, seed, base
 
 
+def task_key(base, seed):
+    return (base.get('Study'), base.get('did'), base.get('Level'), base.get('Task'), base.get('Proxy'), base.get('grouping'), seed)
+
+
 def main():
     rows, batch = [], []
+    done = set()
+    if os.path.exists(OUT):
+        previous = pd.read_csv(OUT)
+        rows = previous.to_dict('records')
+        for r in rows:
+            base = {k: (None if pd.isna(r.get(k)) else r.get(k)) for k in ('Study', 'did', 'Level', 'Task', 'Proxy', 'grouping')}
+            if base['did'] is not None:
+                base['did'] = int(base['did'])
+            if base['grouping'] is not None:
+                base['grouping'] = int(base['grouping'])
+            done.add(task_key(base, int(r['seed'])))
+        print('resuming with', len(done), 'completed tasks', flush=True)
     for task in tasks():
+        if task_key(task[5], task[4]) in done:
+            continue
         batch.append(task)
         if len(batch) == 9:
             for r in Parallel(n_jobs=-1, max_nbytes='1M')(delayed(run)(*t) for t in batch):
