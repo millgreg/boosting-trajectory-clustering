@@ -5,26 +5,36 @@ cd "$PROJECT_ROOT"
 export PYTHONPATH="$PROJECT_ROOT"
 mkdir -p experiments/results
 
-echo "[1/4] Data"
+echo "[1/6] Data"
 uv run python download_all_data.py
 uv run python data/tcga_pancan/download_pancan.py
 
-echo "[2/4] Development studies"
+echo "[2/6] Development studies"
 uv run python experiments/run_history_study.py
 uv run python experiments/run_default_sensitivity.py
 uv run python experiments/run_proxy_contrast.py
 uv run python experiments/run_dev_followups.py --part shap
 uv run python experiments/run_dev_followups.py --part homogeneity
 
-echo "[3/4] Confirmation on held-out datasets"
+echo "[3/6] Confirmation on held-out datasets"
 uv run python experiments/run_confirmation.py
 uv run python experiments/analyze_confirmation.py
 uv run python experiments/run_confirmation_rfc.py
 
-echo "[4/4] TCGA studies"
+echo "[4/6] TCGA studies"
 uv run python experiments/run_tcga_hierarchy.py
 uv run python experiments/analyze_tcga_hierarchy.py
 uv run python experiments/run_tcga_within_cohort.py
 uv run python experiments/analyze_tcga_within_cohort.py
+
+echo "[5/6] Exploratory studies"
+uv run python experiments/run_target_direction.py
+uv run python experiments/run_proximity_variants.py
+uv run python experiments/analyze_proximity_variants.py
+uv run python experiments/run_unknown_k.py
+uv run python experiments/analyze_unknown_k.py
+
+echo "[6/6] Manuscript tables, figures, and numbers"
+uv run python experiments/make_paper_assets.py
 
 echo "Done. Results are in experiments/results/."

@@ -40,6 +40,8 @@ labels = BTC(booster=booster, n_clusters=4).fit_predict(X_target)
 2. **Development studies** on the 13 benchmarks and OpenML-CC18: `run_history_study.py`, `run_default_sensitivity.py`, `run_proxy_contrast.py`, and `run_dev_followups.py`.
 3. **Confirmation** on 40 held-out datasets: `run_confirmation.py`, analysed by `analyze_confirmation.py`, plus the exploratory `run_confirmation_rfc.py`.
 4. **TCGA studies:** `run_tcga_hierarchy.py` and `run_tcga_within_cohort.py`, each with its `analyze_` script.
+5. **Exploratory studies:** `run_target_direction.py`, `run_proximity_variants.py` (Breiman, out-of-bag, and RF-GAP proximities), and `run_unknown_k.py` (number of subtypes estimated), with their `analyze_` scripts.
+6. **Manuscript assets:** `make_paper_assets.py` generates every table, figure, and reported number.
 
 Each analysis plan is written in the docstring of its run script and was committed before the corresponding results existed. Results are written to `experiments/results/`.
 
