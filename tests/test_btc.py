@@ -63,3 +63,18 @@ def test_clean_features_drops_id_like_columns():
 def test_primary_tumor_mask():
     from experiments.dataset_loader import primary_tumor_mask
     assert primary_tumor_mask(['TCGA-AA-0001-01', 'TCGA-AA-0001-11', 'TCGA-AA-0002-06']).tolist() == [True, False, False]
+
+
+def test_factorized_rfc_matches_dense_spectral_embedding():
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.manifold import spectral_embedding
+    from baselines.rfc import RFC
+    from baselines.rfc_factorized import FactorizedRFC
+    X, y = make_classification(300, 10, n_informative=5, random_state=1)
+    forest = RandomForestClassifier(n_estimators=30, random_state=0).fit(X, y)
+    dense = RFC(rf_model=forest, n_clusters=3, random_state=0).fit(X)
+    fast = FactorizedRFC(rf_model=forest, n_clusters=3, random_state=0).fit(X)
+    reference = spectral_embedding(dense.similarity_matrix_, n_components=3, random_state=0, drop_first=False)
+    q1, _ = np.linalg.qr(reference)
+    q2, _ = np.linalg.qr(fast.embedding_)
+    assert np.linalg.svd(q1.T @ q2, compute_uv=False).min() > 0.999
