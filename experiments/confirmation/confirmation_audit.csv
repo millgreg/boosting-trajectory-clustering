@@ -1,0 +1,102 @@
+did,name,version,target,N_used,missing_pct,features,duplicate_pct,K,max_single_feature_auc,excluded
+30,page-blocks,1,class,5473.0,0.0,10.0,1.5,5.0,0.9913,
+42,soybean,1,class,683.0,9.8,65.0,8.2,19.0,1.0,single feature determines a class
+180,covertype,1,class,20000.0,0.0,54.0,3.4,7.0,0.9144,
+181,yeast,1,class_protein_localization,1484.0,0.0,8.0,2.1,10.0,0.997,
+185,baseball,1,Hall_of_Fame,1340.0,0.1,21.0,0.0,3.0,0.9655,ordinal target: nomination level
+378,ipums_la_99-small,1,movedin,8844.0,9.7,282.0,3.7,7.0,1.0,single feature determines a class
+389,fbis.wc,1,CLASS_LABEL,2463.0,0.0,2000.0,0.3,17.0,0.9962,
+391,re0.wc,1,CLASS_LABEL,1504.0,0.0,2886.0,6.9,13.0,0.9827,
+454,analcatdata_halloffame,1,Hall_of_Fame,1340.0,0.1,21.0,0.0,3.0,0.9655,"review: ordinal nomination level, same data as baseball"
+455,cars,1,origin,406.0,0.5,10.0,0.0,3.0,0.9269,
+473,cjs,1,TR,2796.0,71.6,15.0,0.0,6.0,1.0,single feature determines a class; mostly missing
+694,diggle_table_a2,1,col_1,310.0,0.0,8.0,0.0,9.0,1.0,single feature determines a class; ordinal target: unnamed target column
+1041,gina_prior2,1,label,3468.0,0.0,784.0,0.0,10.0,0.8936,
+1044,eye_movements,1,label,10936.0,0.0,27.0,0.0,3.0,0.7166,review: ordinal relevance level
+1100,PopularKids,1,Goals,478.0,0.0,18.0,29.7,3.0,0.6552,duplicated rows
+1476,gas-drift,1,Class,13910.0,0.0,128.0,0.0,6.0,0.9206,
+1482,leaf,1,Class,340.0,0.0,15.0,0.0,30.0,0.9988,
+1483,ldpa,1,Class,20000.0,0.0,12.0,0.0,11.0,0.7888,
+1508,user-knowledge,1,Class,403.0,0.0,5.0,0.0,5.0,0.9763,ordinal target: knowledge level
+1514,micro-mass,1,Class,360.0,0.0,1300.0,0.0,10.0,0.996,
+1523,vertebra-column,1,Class,310.0,0.0,6.0,0.0,3.0,0.9918,
+1538,volcanoes-d1,1,Class,8753.0,0.0,3.0,0.0,5.0,0.8332,too few features
+1557,abalone,3,Class,4177.0,0.0,9.0,0.0,3.0,0.8926,ordinal target: binned age (rings)
+1568,nursery,3,Class,12958.0,0.0,19.0,0.0,4.0,1.0,single feature determines a class
+40498,wine-quality-white,1,Class,4898.0,0.0,11.0,19.1,7.0,0.9151,ordinal target: quality score
+40663,calendarDOW,1,class,399.0,0.0,111.0,44.6,5.0,0.7765,duplicated rows
+40671,ecoli,3,class,327.0,0.0,7.0,0.0,5.0,0.96,
+40672,fars,1,class,20000.0,0.0,92.0,3.6,7.0,0.9983,review: ordinal injury severity
+40685,shuttle,1,class,20000.0,0.0,9.0,0.0,5.0,1.0,single feature determines a class
+40686,solar-flare,3,class,315.0,0.0,22.0,51.4,5.0,1.0,single feature determines a class; duplicated rows
+40700,cars1,1,class,392.0,0.0,10.0,0.0,3.0,0.9268,review: duplicate of cars
+40711,cleveland-nominal,1,class,303.0,0.0,13.0,57.1,5.0,0.7588,duplicated rows
+40971,collins,4,Corp.Genre,1000.0,0.0,19.0,0.0,30.0,0.9366,
+40985,tamilnadu-electricity,3,Class,20000.0,0.0,2.0,0.0,20.0,0.5477,too few features
+41082,USPS,2,int0,9298.0,0.0,256.0,0.0,10.0,0.9888,
+41163,dilbert,1,class,10000.0,0.0,2000.0,0.0,5.0,0.9042,
+41164,fabert,1,class,8237.0,0.0,800.0,0.0,7.0,0.5885,
+41166,volkert,1,class,20000.0,0.0,180.0,0.0,10.0,0.9255,
+41168,jannis,1,class,20000.0,0.0,54.0,0.0,4.0,0.7802,
+41671,microaggregation2,1,class,20000.0,0.0,20.0,0.0,5.0,0.6738,
+41705,ASP-POTASSCO-classification,1,algorithm,1294.0,9.9,145.0,0.1,11.0,0.8595,
+41919,CPMP-2015-runtime-classification,1,algorithm,527.0,0.0,22.0,0.0,4.0,0.8098,
+41972,Indian_pines,1,Class,9144.0,0.0,220.0,0.0,8.0,0.9968,
+42345,Traffic_violations,5,Violation.Type,20000.0,0.2,78.0,61.0,3.0,0.5623,duplicated rows
+42532,Midwest_Survey_nominal,1,Location_(Census_Region),2778.0,1.9,35.0,2.3,10.0,0.7254,
+42585,penguins,1,species,344.0,0.9,8.0,0.0,3.0,0.9939,
+43044,drug-directory,2,PRODUCTTYPENAME,20000.0,19.4,11.0,53.1,6.0,0.9954,duplicated rows
+45067,okcupid_stem,1,class,20000.0,0.0,109.0,0.8,3.0,0.8379,
+45282,AfriSenti,1,label,20000.0,0.0,15.0,99.8,3.0,0.5645,duplicated rows
+45456,timing-attack-dataset-4-micro-seconds-delay-2022-09-12,1,label,9996.0,0.0,124.0,0.0,11.0,0.5436,
+45548,Otto-Group-Product-Classification-Challenge,1,target,20000.0,0.0,93.0,0.0,9.0,0.9791,
+45714,PriceRunner,3,category_label,20000.0,0.0,3.0,0.0,10.0,1.0,single feature determines a class; too few features
+45919,padding-attack-dataset-facebook-2023-12-05,1,label,19487.0,49.9,90.0,0.0,11.0,0.8156,
+45927,Products,1,Product,20000.0,0.0,3.0,0.0,5.0,0.8882,too few features
+45968,BraidFlowSessionLevel,1,flow_state,2364.0,0.0,148.0,0.0,3.0,1.0,single feature determines a class
+46174,Flare,1,Class,1066.0,0.0,30.0,73.1,6.0,1.0,single feature determines a class; duplicated rows
+46332,anneal_clean,1,class,898.0,65.0,22.0,18.7,5.0,0.9709,mostly missing
+46361,Risk_Level_Classification,2,anomaly,20000.0,0.0,18.0,0.0,3.0,1.0,single feature determines a class
+46372,Multiclass_Classification_for_Corporate_Credit_Ratings,1,rating,5000.0,0.0,7.0,0.0,10.0,0.9426,ordinal target: credit rating
+46382,company_quality_and_valuation_finance,1,total_score,719.0,0.0,9.0,0.0,6.0,0.8558,ordinal target: total score
+46420,Apple_Stock_Price_Trends_(2014-2023),1,target,2516.0,0.0,18.0,0.0,3.0,0.5951,review: ordinal price movement
+46441,Credit_Score_Classification,1,credit_score,20000.0,2.3,49.0,0.0,3.0,0.7921,review: ordinal credit level
+46481,Financial-Risk-Assessment,1,risk_rating,15000.0,4.7,26.0,0.0,3.0,0.5293,ordinal target: risk rating
+46505,total_score,1,total_score,719.0,0.0,10.0,0.0,4.0,0.8558,review: ordinal score
+46507,Interest_Rate,1,Interest_Rate,20000.0,6.1,11.0,0.0,3.0,0.6219,ordinal target: binned rate
+46536,dataset_credit_risk_file_2,1,approved_flag,20000.0,0.0,61.0,0.0,4.0,1.0,single feature determines a class
+46561,EDA-Home-Mortgage-NY-Sampled-Dataset,1,action_taken,20000.0,0.2,100.0,0.0,6.0,1.0,single feature determines a class
+46584,Student_Performance_on_an_Entrance_Examination,1,Performance,666.0,0.0,38.0,13.5,4.0,0.8148,review: ordinal grade
+46593,HCV_data,1,Category,615.0,0.4,12.0,0.0,5.0,0.9322,review: disease stage
+46597,Estimation_of_Obesity_Levels,1,NObeyesdad,2111.0,0.0,23.0,1.1,7.0,0.9774,ordinal target: obesity level
+46600,maternal_health_risk,1,RiskLevel,1014.0,0.0,6.0,59.0,3.0,0.8552,duplicated rows; ordinal target: risk level
+46601,Cirrhosis_Patient_Survival_Prediction,1,Status,418.0,13.6,18.0,0.0,3.0,0.8063,
+46652,news_channel,1,channel,20000.0,0.0,16.0,1.0,6.0,0.7062,
+46664,data_scientist_salary,1,,,,,,,,load failure: No objects to concatenate
+46676,WBCAtt,1,label,10298.0,0.0,20.0,96.7,5.0,0.9998,single feature determines a class; duplicated rows
+46701,social_bias_frames,1,offensiveYN,20000.0,29.6,78.0,79.8,4.0,0.8828,duplicated rows
+46720,OSMI_Mental_Health_in_Tech_Survey,1,remote_work,1433.0,24.7,194.0,0.0,3.0,0.6098,review: ordinal frequency answer
+46737,agriculture_dataset_karnataka,1,Crops,3158.0,0.2,47.0,0.0,13.0,0.8801,
+46745,Advanced_IoT_Dataset,1,Class,20000.0,0.0,14.0,0.0,6.0,1.0,single feature determines a class
+46760,Indicators_of_Anxiety_or_Depression,1,Indicator,16092.0,4.0,28.0,4.6,3.0,0.7859,review: overlapping classes of aggregated survey rows
+46762,air-quality-and-pollution-assessment,1,Air_Quality,5000.0,0.0,9.0,0.0,4.0,0.993,ordinal target: air quality level
+46764,football-player-position,2,class,3611.0,0.0,11.0,0.0,4.0,0.9678,
+46806,product_sentiment_machine_hack,2,Sentiment,5091.0,0.0,3.0,0.0,4.0,0.9179,too few features; ordinal target: sentiment score
+46807,melbourne_airbnb,2,price_label,18316.0,9.7,160.0,0.0,10.0,1.0,single feature determines a class
+46825,SOCC,2,toxicity_level,1043.0,16.9,71.0,65.5,4.0,0.7419,duplicated rows
+46827,QSAR_Bioconcentration_classification,2,Class,779.0,0.0,10.0,2.2,3.0,0.6897,
+46828,Cervical_Cancer_Risk_Factors,2,Class,858.0,13.2,30.0,3.7,5.0,0.6292,ordinal target: combined test positives
+46850,hepatitis_c_virus_hcv_for_egyptian_patients,2,Baselinehistological_staging,1385.0,0.0,28.0,0.0,4.0,0.5561,ordinal target: histological stage
+46879,mental_health_detection,2,Depression_State,540.0,0.0,14.0,94.1,4.0,0.6364,duplicated rows; ordinal target: depression state
+46933,hiva_agnostic,2,CompoundActivity,3845.0,0.0,1617.0,0.5,3.0,0.5939,
+46936,internet_firewall,1,Action,20000.0,0.0,11.0,6.5,4.0,0.9941,
+46943,MIC,2,LET_IS,1699.0,3.1,262.0,0.0,8.0,1.0,single feature determines a class
+46944,Mobile_Price,1,price_range,2000.0,0.0,20.0,0.0,4.0,0.9753,ordinal target: price range
+46955,SDSS17,1,ObjectType,20000.0,0.0,9.0,0.0,3.0,0.9966,
+46960,students_dropout_and_academic_success,1,AcademicOutcome,4424.0,0.0,238.0,0.0,3.0,0.8465,
+46963,website_phishing,1,WebsiteType,1353.0,0.0,16.0,50.0,3.0,0.7544,duplicated rows
+46981,regensburg_pediatric_appendicitis,3,Management,780.0,32.4,46.0,0.0,3.0,0.9358,
+47023,MedMCQA,1,cop,20000.0,7.2,21.0,99.8,4.0,0.5758,duplicated rows
+47171,Uber_Ride_Analytics,1,BOOKING_STATUS,20000.0,12.5,37.0,5.8,5.0,0.8758,
+47275,ponys_ai_six_language_character_catalog,1,metadata_locale,624.0,0.0,1.0,83.3,6.0,0.5,duplicated rows; too few features
+47588,marketing-income,1,Income,8993.0,2.3,13.0,18.9,9.0,0.8273,ordinal target: income band
