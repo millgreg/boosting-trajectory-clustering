@@ -1,26 +1,18 @@
-# Core dependencies for Boosting Trajectory Clustering (BTC)
+# Versions used for the reported results (Python 3.14)
+
+# BTC and baselines
 numpy==2.4.6
 scipy==1.17.1
-pandas==2.3.3
 scikit-learn==1.9.0
-matplotlib==3.11.0
-seaborn==0.13.2
-
-# GBDT Backends (at least one required)
-# scikit-learn's GradientBoostingClassifier is included above
 xgboost==3.3.0
 lightgbm==4.6.0
 
-# Dimensionality reduction / Baselines
+# Experiments
+pandas==2.3.3
+joblib==1.5.3
 umap-learn==0.5.12
-
-# Data acquisition & biomedical processing
 openml==0.15.1
-requests==2.34.2
 scanpy==1.12.1
 
-# Genomics-specific
-lifelines==0.30.0       # Kaplan-Meier survival analysis (TCGA experiment)
-
-# Statistical / Diagnostic tools
-diptest==0.11.0
+# Manuscript figures
+matplotlib==3.11.0
