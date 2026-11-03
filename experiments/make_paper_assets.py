@@ -362,7 +362,7 @@ def tcga():
     real = a.xs('real', level='Proxy').droplevel('grouping')
     random = a.xs('random', level='Proxy').groupby('Task').mean()
     lines = [r'\begin{table}[t]', r'\centering', r'\small',
-             r'\caption{TCGA, organ system to cancer type. Mean ARI over 5 seeds for each PanCanAtlas grouping (proxy: the group versus all other cancers; subtypes: its cancer types), with the mean over three random groupings of the same size in the last row.}',
+             r'\caption{TCGA, organ system to cancer type. Mean ARI over 5 seeds for each grouping of related cancer types (proxy: the group versus all other cancers; subtypes: its cancer types), with the mean over three random groupings of the same size in the last row.}',
              r'\label{tab:tcga_a}', r'\begin{tabular}{lcccccc}', r'\toprule',
              r'\textbf{Grouping} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} & \textbf{$K$-M raw} & \textbf{$K$-M std.} \\', r'\midrule']
     for task, row in real.iterrows():
