@@ -34,14 +34,15 @@ from baselines import rf_proximities
 from experiments import run_confirmation, run_tcga_hierarchy, run_tcga_within_cohort
 
 OUT = os.path.join(ROOT, 'experiments', 'results', 'proximity_variants.csv')
+VARIANTS = list(rf_proximities.VARIANTS)
 
 
-def score_variants(X_train, y, target_rows, labels, seed, base):
+def score_variants(X_train, y, target_rows, labels, seed, base, variants=None):
     z = np.searchsorted(np.unique(labels), labels)
     k = len(np.unique(z))
     forest = RandomForestClassifier(n_estimators=100, random_state=seed, n_jobs=1).fit(X_train, y)
     rows = []
-    for variant in rf_proximities.VARIANTS:
+    for variant in (variants or VARIANTS):
         predicted = rf_proximities.cluster(forest, X_train, target_rows, variant, k, random_state=seed)
         rows.append({**base, 'seed': seed, 'K': k, 'Method': variant, 'ARI': adjusted_rand_score(z, predicted)})
     return rows
@@ -85,19 +86,26 @@ def tcga_tasks():
 
 
 def main():
+    global OUT, VARIANTS
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--variants', nargs='+', default=VARIANTS)
+    parser.add_argument('--output', default=OUT)
+    args = parser.parse_args()
+    VARIANTS, OUT = args.variants, args.output
     rows = []
     for source in (confirmation_tasks, tcga_tasks):
         batch = []
         for task in source():
             batch.append(task)
             if len(batch) == 15:
-                for r in Parallel(n_jobs=-1, max_nbytes='1M')(delayed(score_variants)(*t) for t in batch):
+                for r in Parallel(n_jobs=-1, max_nbytes='1M')(delayed(score_variants)(*t, VARIANTS) for t in batch):
                     rows.extend(r)
                 batch = []
                 pd.DataFrame(rows).to_csv(OUT, index=False)
                 print(rows[-1]['Study'], rows[-1].get('Dataset', rows[-1].get('Task')), flush=True)
         if batch:
-            for r in Parallel(n_jobs=-1, max_nbytes='1M')(delayed(score_variants)(*t) for t in batch):
+            for r in Parallel(n_jobs=-1, max_nbytes='1M')(delayed(score_variants)(*t, VARIANTS) for t in batch):
                 rows.extend(r)
             pd.DataFrame(rows).to_csv(OUT, index=False)
     print('ALL_DONE', flush=True)

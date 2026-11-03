@@ -3,9 +3,10 @@
 Each proximity is written as P = Q W^T with sparse sample-by-leaf factors (Aumon et al., 2026):
 
 * Breiman: Q = W = Z / sqrt(T), where Z is the one-hot leaf incidence over all trees.
-* Out-of-bag (separable approximation of Aumon et al.): Q = W, with entry o_t(i) / sqrt(S_i)
-  at sample i's leaf in tree t, where o_t(i) = 1 if i is out of bag for tree t and S_i is the
-  number of such trees.
+* Out-of-bag, separable approximation of Aumon et al.: shared out-of-bag leaf collisions are
+  normalized by S_i S_j / T instead of by the number of trees where both samples are out of bag.
+  Q = W, with entry o_t(i) sqrt(T) / S_i at sample i's leaf in tree t, where o_t(i) = 1 if i is
+  out of bag for tree t and S_i is the number of such trees.
 * RF-GAP (Rhodes et al., 2023): Q has o_t(i) / S_i at sample i's leaf, and W has
   c_t(j) / M_t(l) at sample j's leaf l, where c_t(j) is j's in-bag multiplicity and M_t(l)
   the total in-bag multiplicity in that leaf. P is asymmetric and is symmetrized as (P + P^T) / 2.
@@ -46,7 +47,7 @@ def _factors(forest: Any, X_train: np.ndarray, target_rows: np.ndarray, variant:
     n_oob = np.maximum(out_of_bag.sum(axis=1), 1.0)
 
     if variant == 'oob':
-        values = (out_of_bag / np.sqrt(n_oob)[:, None]).ravel()
+        values = (out_of_bag * np.sqrt(n_trees) / n_oob[:, None]).ravel()
         Q = csr_matrix((values, (rows, target_columns.ravel())), shape=(n, n_columns))
         return Q, Q, Q.multiply(Q).sum(axis=1).A1
 

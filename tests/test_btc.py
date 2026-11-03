@@ -114,7 +114,9 @@ def test_proximity_factorization_matches_brute_force(variant):
             if variant == 'breiman':
                 expected[a, b] = same.mean()
             elif variant == 'oob':
-                expected[a, b] = (oob[i] & oob[j] & same).sum() / np.sqrt(oob[i].sum() * oob[j].sum())
+                # Aumon et al. (2026): shared out-of-bag collisions over S_i S_j / T.
+                n_trees = leaves.shape[1]
+                expected[a, b] = (oob[i] & oob[j] & same).sum() / (oob[i].sum() * oob[j].sum() / n_trees)
             else:
                 total = sum(counts[j, t] / counts[leaves[:, t] == leaves[i, t], t].sum()
                             for t in np.where(oob[i] & same)[0])
