@@ -47,3 +47,5 @@ data/tcga_gbmlgg/GBMLGG_clinicalMatrix
 data/tcga_pancan/*
 !data/tcga_pancan/download_pancan.py
 data/paul15/
+data/gtex/*
+!data/gtex/download_gtex.py

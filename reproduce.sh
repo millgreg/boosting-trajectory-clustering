@@ -8,6 +8,7 @@ mkdir -p experiments/results
 echo "[1/6] Data"
 uv run python download_all_data.py
 uv run python data/tcga_pancan/download_pancan.py
+uv run python data/gtex/download_gtex.py
 
 echo "[2/6] Development studies"
 uv run python experiments/run_history_study.py
@@ -21,11 +22,13 @@ uv run python experiments/run_confirmation.py
 uv run python experiments/analyze_confirmation.py
 uv run python experiments/run_confirmation_rfc.py
 
-echo "[4/6] TCGA studies"
+echo "[4/6] TCGA and GTEx studies"
 uv run python experiments/run_tcga_hierarchy.py
 uv run python experiments/analyze_tcga_hierarchy.py
 uv run python experiments/run_tcga_within_cohort.py
 uv run python experiments/analyze_tcga_within_cohort.py
+uv run python experiments/run_gtex.py
+uv run python experiments/analyze_gtex.py
 
 echo "[5/6] Exploratory studies"
 uv run python experiments/run_target_direction.py
