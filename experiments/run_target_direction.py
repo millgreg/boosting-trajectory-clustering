@@ -25,13 +25,14 @@ def regress_out(M, v):
     C = M - M.mean(axis=0); x = v - v.mean()
     return C - np.outer(x, (x @ C) / (x @ x))
 
-def task(s, name, Xf, y, Xt, z, k):
+def task(s, name, Xf, y, Xt, z, k, idx):
     g = GradientBoostingClassifier(n_estimators=100, max_depth=1, max_features='sqrt', random_state=s).fit(Xf, y)
     F = extract_staged_decision_function(g, Xt)
     F0 = extract_raw_init(g, Xt)
     D = np.diff(np.column_stack([F0, F]), axis=1)
     Fprev = np.column_stack([F0, F])[:, :-1]
-    R = 1.0 - 1.0 / (1.0 + np.exp(-Fprev))
+    # Pseudo-residuals y - p with each target sample's own proxy label, as in run_history_study.py.
+    R = y[idx].astype(float)[:, None] - 1.0 / (1.0 + np.exp(-Fprev))
     final = F[:, -1]
     reps = {
         'BTC tree updates': D,
@@ -48,7 +49,7 @@ def task(s, name, Xf, y, Xt, z, k):
 
 rows = []
 for n in ALL_DATASETS:
-    data = load_dataset(n)
+    data = load_dataset(n, return_indices=True)
     for r in Parallel(n_jobs=3)(delayed(task)(s, n, *data) for s in range(10)):
         rows.extend(r)
     print(n, flush=True)

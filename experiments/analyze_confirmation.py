@@ -1,6 +1,6 @@
 """Pre-specified analysis of the confirmation run, written before any result existed.
 
-Follows paper/protocol/PROTOCOL.md: dataset-level means, 95% bootstrap intervals with
+Follows experiments/confirmation/PROTOCOL.md: dataset-level means, 95% bootstrap intervals with
 20,000 resamples, and a claim of difference only when the interval excludes zero.
 """
 import os

@@ -1,0 +1,6 @@
+# SHA-256 checksums of the alignment and model-size study scripts, recorded before either study was run.
+2026-11-05T12:41:20Z plans fixed before running
+4cc202c5633f11ce71f6cf41fd0fbef5ae5f0d70b1ee23fd3860b290cb4d3ed2 *experiments/run_alignment.py
+6a1e315ee4192f00e90ee53e3f5e1271264f8343007e89fb5c2d4b72a45489d4 *experiments/analyze_alignment.py
+b45fc07f930d4475d47f1885ed85da9e682425414bbd99cdc0630ef13e040bfb *experiments/run_capacity.py
+0728a1d646b9abdb53e4f834b75231a402f09c2691df2d775d7f332867b098dc *experiments/analyze_capacity.py

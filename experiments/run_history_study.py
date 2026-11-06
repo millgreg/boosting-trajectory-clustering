@@ -34,13 +34,6 @@ def kmeans(Z, k, seed):
     return KMeans(n_clusters=k, n_init=N_RESTARTS, random_state=seed).fit_predict(Z)
 
 
-def target_indices(X_full, X_target):
-    positions = {}
-    for i, row in enumerate(X_full):
-        positions.setdefault(row.tobytes(), []).append(i)
-    return np.array([positions[row.tobytes()].pop(0) for row in X_target])
-
-
 def fit_stumps(X, y, seed):
     return GradientBoostingClassifier(n_estimators=N_TREES, max_depth=1, max_features='sqrt', random_state=seed).fit(X, y)
 
@@ -173,8 +166,7 @@ def main():
     args = parser.parse_args()
     rows = []
     for name in ALL_DATASETS:
-        X_full, y, X_target, subtypes, k = load_dataset(name)
-        idx = target_indices(X_full, X_target)
+        X_full, y, X_target, subtypes, k, idx = load_dataset(name, return_indices=True)
         results = Parallel(n_jobs=-1)(
             delayed(run_seed)(seed, name, X_full, y, X_target, subtypes, k, idx) for seed in range(args.seeds))
         for seed_rows in results:

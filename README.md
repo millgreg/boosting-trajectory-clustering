@@ -8,6 +8,7 @@ Code for a study of proxy-guided subtype discovery: using a coarse binary label 
 - On TCGA PanCanAtlas data, plain K-Means outperformed every supervised tree representation, both for cancer types within organ systems and for molecular subtypes within cancer types. Proxies measured within a cancer type (stage, grade, survival and others) did not help either, except hormone-receptor status in breast cancer.
 - On GTEx, where the finer labels are anatomical sampling sites rather than results of clustering, plain K-Means again outperformed every supervised tree representation (proxy: one tissue versus all others).
 - Boosting histories carry little beyond the final margin and the tree splits: pseudo-residuals, learning speed, and tree order add little or nothing.
+- In a controlled study with proxies built from the subtypes, supervision helped only when the proxy was strongly aligned with the subtypes; real clinical proxies were far less aligned.
 - Tree-based representations are unaffected by feature scaling, whereas K-Means results change substantially between raw and standardized features.
 
 Confirmatory analyses followed a protocol frozen before the run; see `experiments/confirmation/PROTOCOL.md`.
@@ -41,7 +42,7 @@ labels = BTC(booster=booster, n_clusters=4).fit_predict(X_target)
 2. **Development studies** on the 13 benchmarks and OpenML-CC18: `run_history_study.py`, `run_default_sensitivity.py`, `run_proxy_contrast.py`, and `run_dev_followups.py`.
 3. **Confirmation** on 40 held-out datasets: `run_confirmation.py`, analysed by `analyze_confirmation.py`, plus the exploratory `run_confirmation_rfc.py`.
 4. **TCGA and GTEx studies:** `run_tcga_hierarchy.py`, `run_tcga_within_cohort.py`, and `run_gtex.py`, each with its `analyze_` script.
-5. **Exploratory studies:** `run_target_direction.py`, `run_proximity_variants.py` (Breiman, out-of-bag, and RF-GAP proximities), and `run_unknown_k.py` (number of subtypes estimated), with their `analyze_` scripts.
+5. **Exploratory studies:** `run_target_direction.py`, `run_proximity_variants.py` (Breiman, out-of-bag, and RF-GAP proximities), `run_unknown_k.py` (number of subtypes estimated), `run_alignment.py` (proxies built from the subtypes with controlled label noise), and `run_capacity.py` (larger boosted models), with their `analyze_` scripts, plus `proxy_alignment.py` (alignment of the real TCGA proxies).
 6. **Manuscript assets:** `make_paper_assets.py` generates every table, figure, and reported number.
 
 Each analysis plan is written in the docstring of its run script and was committed before the corresponding results existed. Results are written to `experiments/results/`.

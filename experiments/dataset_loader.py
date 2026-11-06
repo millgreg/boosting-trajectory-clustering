@@ -40,7 +40,8 @@ def primary_tumor_mask(sample_ids):
     return np.array([str(s).split('-')[3].startswith('01') for s in sample_ids])
 
 
-def load_dataset(name, base_dir=None):
+def load_dataset(name, base_dir=None, return_indices=False):
+    """Return X_full, y_binary, X_target, subtypes, K, and with return_indices the rows of X_target in X_full."""
     if base_dir is None:
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         
@@ -121,6 +122,7 @@ def load_dataset(name, base_dir=None):
             y_binary = ds['y'][primary]
             subtypes = ds['subtypes'][primary]
             X_target = X_full  # Subtypes defined on the whole dataset here
+            target_idx = np.arange(len(X_full))
         else:
             subtypes = ds['subtypes']
             sample_ids = ds['sample_ids']
@@ -142,7 +144,9 @@ def load_dataset(name, base_dir=None):
             
             target_set = set(sample_ids)
             target_idx_in_full = [i for i, sid in enumerate(full_sample_ids) if sid in target_set]
-            
+            # Subtype labels follow the order of sample_ids, the rows follow the full data; they must agree.
+            assert [full_sample_ids[i] for i in target_idx_in_full] == list(sample_ids), f'{name}: target order differs'
+
             if name == 'diabetes' and len(target_idx_in_full) > 2000:
                 # Downsample target cohort to 2000 to save computation
                 rng = np.random.RandomState(42)
@@ -151,16 +155,22 @@ def load_dataset(name, base_dir=None):
                 subtypes = subtypes[sub_indices]
                 
             X_target = X_full[target_idx_in_full]
-            
+            target_idx = np.asarray(target_idx_in_full)
+
             if name == 'paul15':
                 svd = TruncatedSVD(n_components=50, random_state=42)
                 X_full = svd.fit_transform(X_full)
                 X_target = X_full[target_idx_in_full]
                 
+    if name in OPENML_DATASETS:
+        target_idx = np.where(y_binary == 1)[0]
+
     # convert subtypes to 0..k-1
     unique_labels = np.unique(subtypes)
     label_map = {lbl: i for i, lbl in enumerate(unique_labels)}
     subtypes_int = np.array([label_map[lbl] for lbl in subtypes])
     k = len(unique_labels)
     
+    if return_indices:
+        return X_full, y_binary, X_target, subtypes_int, k, target_idx
     return X_full, y_binary, X_target, subtypes_int, k

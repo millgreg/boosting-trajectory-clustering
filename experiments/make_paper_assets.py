@@ -177,6 +177,8 @@ def target_direction():
     num('TdResidualMarginRemoved', t['Residual history, final margin regressed out'].mean())
     num('TdBTC', t['BTC tree updates'].mean())
     num('TdBTCMarginRemoved', t['BTC tree updates, final margin regressed out'].mean())
+    num('TdCumulative', t['Cumulative margins'].mean())
+    num('TdSeeds', d.seed.nunique())
 
 
 def sensitivity():
@@ -279,7 +281,8 @@ def confirmation():
     x = t['BTC'] - t['RFC spectral']
     lo, hi = bootstrap(x)
     lines.append(r'\midrule')
-    lines.append(f'Exploratory & BTC $-$ spectral RFC & {f3(x.mean())} [{f3(lo)}, {f3(hi)}] & {int((x > 5e-4).sum())} / {int((x < -5e-4).sum())} & difference \\\\')
+    verdict = 'difference' if lo > 0 or hi < 0 else 'no claim'
+    lines.append(f'Exploratory & BTC $-$ spectral RFC & {f3(x.mean())} [{f3(lo)}, {f3(hi)}] & {int((x > 5e-4).sum())} / {int((x < -5e-4).sum())} & {verdict} \\\\')
     num('ConfRFCDiff', x.mean()); ci('ConfRFCDiff', lo, hi); num('ConfRFCLower', int((x < -5e-4).sum()))
     lines += [r'\bottomrule', r'\end{tabular}', r'\end{table}']
     write('confirmation.tex', lines)
@@ -558,6 +561,8 @@ def unknown_k():
     num('UnkTcgaUnderPct', 100 * float((tcga_rows.K_chosen < tcga_rows.K_true).mean()), 0)
     shap = d[(d.Study == 'confirmation') & (d.Method == 'TreeSHAP')]
     num('UnkConfShapMedianK', float(shap.K_chosen.median()), 1)
+    conf = d[d.Study == 'confirmation']
+    num('UnkBeyond', int(conf.groupby('did').apply(lambda x: (x.K_true > x.K_max).any()).sum()))
 
 
 def gtex():
@@ -615,10 +620,96 @@ def gtex():
     num('TcgaHomWithin', 100 * w.mean(), 0)
 
 
+def alignment():
+    d = pd.read_csv(os.path.join(RES, 'alignment.csv'))
+    s = pd.read_csv(os.path.join(RES, 'alignment_summary.csv'))
+    real = pd.read_csv(os.path.join(RES, 'within_proxy_alignment.csv'))
+    methods = [('BTC', 'BTC'), ('TreeSHAP', 'Shap'), ('RF leaves with SVD', 'RFSVD'), ('RFC spectral', 'RFC')]
+    pooled = s[s.Scope == 'Pooled']
+    a2 = pooled[pooled.Question == 'A2']
+    ami = d.groupby(['Source', 'Task', 'Noise']).Alignment_AMI.mean().groupby('Noise').mean()
+
+    lines = [r'\begin{table}[t]', r'\centering', r'\small',
+             r'\caption{Alignment study: mean gain in ARI over the better of raw and standardized $K$-Means, pooled over the TCGA and GTEx cohorts, by the share of flipped proxy labels. Alignment is the mean adjusted mutual information between proxy and subtypes.}',
+             r'\label{tab:alignment}', r'\begin{tabular}{lcccccc}', r'\toprule',
+             r'\textbf{Flipped labels} & ' + ' & '.join(f'{q:.0%}'.replace('%', r'\%') for q in ami.index) + r' \\',
+             r'Alignment (AMI) & ' + ' & '.join(f3(v) for v in ami.values) + r' \\', r'\midrule']
+    for m, _ in methods:
+        row = a2[a2.Method == m].set_index('Noise').Estimate
+        lines.append(f'{latex_name(m)} & ' + ' & '.join(f3(row[q]) for q in ami.index) + r' \\')
+    lines += [r'\bottomrule', r'\end{tabular}', r'\end{table}']
+    write('alignment.tex', lines)
+
+    fig, ax = plt.subplots(figsize=(4.6, 3.1))
+    style(ax)
+    ax.grid(axis='y', color=GRID, linewidth=0.6)
+    ax.axhline(0, color=NEUTRAL, linewidth=0.8)
+    labels = {'BTC': 'BTC', 'TreeSHAP': 'TreeSHAP', 'RF leaves with SVD': 'RF leaves', 'RFC spectral': 'Spectral RFC'}
+    for m, _ in methods[1:]:
+        row = a2[a2.Method == m].set_index('Noise').Estimate
+        ax.plot(ami.values, row[ami.index].values, color=NEUTRAL, linewidth=1.2)
+    btc = a2[a2.Method == 'BTC'].set_index('Noise')
+    ax.fill_between(ami.values, btc.Lower[ami.index].values, btc.Upper[ami.index].values, color=BLUE, alpha=0.15, linewidth=0)
+    ax.plot(ami.values, btc.Estimate[ami.index].values, color=BLUE, linewidth=2, marker='o', markersize=4)
+    ends = sorted(((a2[(a2.Method == m) & (a2.Noise == 0.0)].Estimate.iloc[0], m) for m, _ in methods))
+    placed = []
+    for y, m in ends:
+        y_label = max(y, placed[-1] + 0.028) if placed else y
+        placed.append(y_label)
+        ax.annotate(labels[m], (ami.values[0], y), xytext=(ami.values[0] + 0.02, y_label), textcoords='data', fontsize=7,
+                    color=INK if m == 'BTC' else INK2, va='center')
+    low = ax.get_ylim()[0]
+    ax.plot(real.AMI, np.full(len(real), low), '|', color=INK2, markersize=7, alpha=0.6)
+    ax.annotate('TCGA clinical proxies', (0.30, low), xytext=(0, 6), textcoords='offset points', fontsize=7, color=INK2)
+    ax.set_ylim(low - 0.02, None)
+    ax.set_xlim(-0.02, ami.values[0] + 0.17)
+    ax.set_xlabel('Alignment of proxy with subtypes (AMI)', fontsize=8, color=INK2)
+    ax.set_ylabel('ARI gain over better $K$-Means', fontsize=8, color=INK2)
+    fig.tight_layout()
+    fig.savefig(os.path.join(FIGURES, 'alignment.pdf'))
+    plt.close(fig)
+
+    def pick(scope, question, method, noise=None):
+        part = s[(s.Scope == scope) & (s.Question == question) & (s.Method == method)]
+        return part.iloc[0] if noise is None else part[part.Noise == noise].iloc[0]
+
+    for m, short in methods:
+        for name, row in [(f'AlignSlope{short}', pick('Pooled', 'A1', m)), (f'AlignZero{short}', pick('Pooled', 'A2', m, 0.0)),
+                          (f'AlignRandom{short}', pick('Pooled', 'A2', m, 0.5))]:
+            num(name, row.Estimate); ci(name, row.Lower, row.Upper)
+    row = pick('TCGA', 'A2', 'BTC', 0.0)
+    num('AlignTcgaZeroBTC', row.Estimate); ci('AlignTcgaZeroBTC', row.Lower, row.Upper)
+    zero = a2[a2.Noise == 0.0].Estimate
+    num('AlignZeroMin', zero.min()); num('AlignZeroMax', zero.max())
+    rho = pooled[pooled.Question == 'A3'].Estimate
+    num('AlignRhoMin', rho.min(), 2); num('AlignRhoMax', rho.max(), 2)
+    for q, name in [(0.0, 'Zero'), (0.1, 'Ten'), (0.2, 'Twenty')]:
+        num(f'AlignAMI{name}', ami[q])
+    num('AlignCohorts', d.groupby(['Source', 'Task']).ngroups)
+    num('AlignTcgaCohorts', d[d.Source == 'TCGA'].Task.nunique())
+    num('AlignGtexCohorts', d[d.Source == 'GTEx'].Task.nunique())
+    num('AlignGtexTwo', int((d[d.Source == 'GTEx'].groupby('Task').K.first() == 2).sum()))
+    num('RealAMIMedian', real.AMI.median())
+    num('RealAMIER', real.set_index(['Task', 'Proxy']).AMI[('BRCA', 'er')])
+    num('RealAMIPR', real.set_index(['Task', 'Proxy']).AMI[('BRCA', 'pr')])
+    num('RealAMIAboveN', int((real.AMI >= 0.2).sum()))
+    num('RealPairs', len(real))
+
+
+def capacity():
+    s = pd.read_csv(os.path.join(RES, 'capacity_summary.csv'))
+    for source in ['TCGA', 'GTEx']:
+        for method, short in [('BTC, 1000 stumps', 'BTC'), ('TreeSHAP, 300 depth-3 trees', 'Shap')]:
+            for question, label in [('M1', 'Gain'), ('M2', 'Delta')]:
+                row = s[(s.Source == source) & (s.Method == method) & (s.Question == question)].iloc[0]
+                name = f'Cap{source.capitalize()}{short}{label}'
+                num(name, row.Estimate); ci(name, row.Lower, row.Upper)
+
+
 def main():
     os.makedirs(TABLES, exist_ok=True)
     os.makedirs(FIGURES, exist_ok=True)
-    development(); brca_receptors(); target_direction(); sensitivity(); shap_setups(); homogeneity(); proxy_contrast(); confirmation(); tcga(); proximities(); unknown_k(); gtex()
+    development(); brca_receptors(); target_direction(); sensitivity(); shap_setups(); homogeneity(); proxy_contrast(); confirmation(); tcga(); proximities(); unknown_k(); gtex(); alignment(); capacity()
     with open(os.path.join(PAPER, 'numbers.tex'), 'w', encoding='utf-8') as f:
         f.write('% Generated by experiments/make_paper_assets.py. Do not edit.\n')
         for k, v in sorted(macros.items()):

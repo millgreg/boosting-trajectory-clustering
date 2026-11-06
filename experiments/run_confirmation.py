@@ -1,4 +1,4 @@
-"""Confirmation run on datasets never used for development. See paper/protocol/PROTOCOL.md.
+"""Confirmation run on datasets never used for development. See experiments/confirmation/PROTOCOL.md.
 
 Each dataset contributes three random class groupings with five seeds each. Every method
 receives the true K. Results are written incrementally so an interrupted run can be resumed.

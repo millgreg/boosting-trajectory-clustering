@@ -36,6 +36,11 @@ uv run python experiments/run_proximity_variants.py
 uv run python experiments/analyze_proximity_variants.py
 uv run python experiments/run_unknown_k.py
 uv run python experiments/analyze_unknown_k.py
+uv run python experiments/run_alignment.py
+uv run python experiments/analyze_alignment.py
+uv run python experiments/proxy_alignment.py
+uv run python experiments/run_capacity.py
+uv run python experiments/analyze_capacity.py
 
 echo "[6/6] Manuscript tables, figures, and numbers"
 uv run python experiments/make_paper_assets.py
