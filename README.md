@@ -16,10 +16,10 @@ Confirmatory analyses followed a protocol frozen before the run; see `experiment
 ## Installation
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-lock.txt
 ```
 
-`requirements.txt` pins the versions used for the reported results, and `requirements-lock.txt` records the full environment (Python 3.14). Install `pytest` to run the tests with `python -m pytest tests`.
+`requirements-lock.txt` records the full environment used for the reported results (Python 3.14), including indirect dependencies. `requirements.txt` lists only the direct dependencies and is enough to use BTC. Install `pytest` to run the tests with `python -m pytest tests`.
 
 ## Usage
 
