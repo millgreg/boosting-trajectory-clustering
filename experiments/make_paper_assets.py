@@ -392,7 +392,7 @@ def tcga():
     real = a.xs('real', level='Proxy').droplevel('grouping')
     random = a.xs('random', level='Proxy').groupby('Task').mean()
     lines = [r'\begin{table}[t]', r'\centering', r'\small',
-             r'\caption{TCGA, organ system to cancer type. Mean ARI over 5 seeds for each grouping of related cancer types (proxy: the group versus all other cancers; subtypes: its cancer types), with the mean over three random groupings of the same size in the last row.}',
+             r'\caption{TCGA, organ system to cancer type. Mean ARI over 5 seeds for each grouping of related cancer types (proxy: the group versus all other cancers; subtypes: its cancer types). The last two rows average over the six real groupings and over their random counterparts, three random groupings with the same number of cancer types for each real grouping.}',
              r'\label{tab:tcga_a}', r'\begin{tabular}{lrrrrrr}', r'\toprule',
              r'\textbf{Grouping} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} & \textbf{$K$-M raw} & \textbf{$K$-M std.} \\', r'\midrule']
     for task, row in real.iterrows():
@@ -463,7 +463,7 @@ def tcga():
              'pr': 'Progesterone receptor (BRCA)', 'progression': 'Progression event', 'sex': 'Sex', 'stage': 'Pathologic stage I--II vs.\\ III--IV',
              'survival': 'Death during follow-up'}
     lines = [r'\begin{table}[ht]', r'\centering', r'\small',
-             r'\caption{TCGA within-cohort proxies: mean gain over the better $K$-Means baseline by proxy type.}', r'\label{tab:within_proxy}',
+             r'\caption{TCGA within-cohort proxies: mean gain over the better of raw and standardized $K$-Means by proxy type. Cancer types is the number of cancer types in which the proxy met the size rules (\Cref{app:biomed}); the last row averages over all cancer type--proxy pairs.}', r'\label{tab:within_proxy}',
              r'\begin{tabular}{lrrrrr}', r'\toprule',
              r'\textbf{Proxy} & \textbf{Cancer types} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} \\', r'\midrule']
     for p, row in by_proxy.sort_values('BTC', ascending=False).iterrows():
