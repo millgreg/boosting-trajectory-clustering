@@ -86,7 +86,7 @@ def development():
             ('Boosting', 'Stump leaves, unweighted', 'Stump leaves, unweighted$^a$'),
             ('Boosting', 'Per-feature sums, SHAP-equivalent', 'Per-feature sums'),
             ('Other supervised', 'TreeSHAP, XGBoost depth 3', 'TreeSHAP, depth 3, unstandardized$^b$'),
-            ('Other supervised', 'RF leaves with SVD', 'RF leaves with SVD'),
+            ('Other supervised', 'RF leaves with SVD', 'RF leaves'),
             ('Other supervised', 'RFC spectral', 'Spectral RFC'),
             ('Unsupervised', 'Raw K-Means', '$K$-Means, raw'),
             ('Unsupervised', 'K-Means scaled', '$K$-Means, standardized'),
@@ -160,7 +160,7 @@ def development():
     lines = [r'\begin{table}[ht]', r'\centering', r'\small',
              r'\caption{Development benchmarks by dataset (mean ARI over 30 seeds). TreeSHAP is the initial setup with depth-3 trees and without standardization, as in \Cref{tab:development}.}', r'\label{tab:development_by_dataset}',
              r'\scriptsize', r'\setlength{\tabcolsep}{3pt}', r'\begin{tabular}{lrrrrrrrr}', r'\toprule',
-             r'\textbf{Dataset} & \textbf{BTC} & \textbf{Per-feat.} & \textbf{TreeSHAP} & \textbf{Residuals} & \textbf{RF SVD} & \textbf{RFC} & \textbf{$K$-M raw} & \textbf{$K$-M std.} \\', r'\midrule']
+             r'\textbf{Dataset} & \textbf{BTC} & \textbf{Per-feat.} & \textbf{TreeSHAP} & \textbf{Residuals} & \textbf{RF leaves} & \textbf{RFC} & \textbf{$K$-M raw} & \textbf{$K$-M std.} \\', r'\midrule']
     cols = ['BTC tree updates', 'Per-feature sums, SHAP-equivalent', 'TreeSHAP, XGBoost depth 3', 'Historic residuals',
             'RF leaves with SVD', 'RFC spectral', 'Raw K-Means', 'K-Means scaled']
     for ds in t.index:
@@ -203,7 +203,7 @@ def sensitivity():
               'Depth 2': 'Tree depth 2', 'Depth 3': 'Tree depth 3', 'Features all': 'All features at each split',
               'Features 10%': r'10\% of features at each split', 'Row subsample 0.5': 'Half of the rows per tree',
               'Rescaled per tree': 'Updates standardized per tree', 'Agglomerative backend': 'Ward clustering instead of $K$-Means',
-              'RF leaves with SVD': 'RF leaves with SVD', 'Raw K-Means': '$K$-Means, raw'}
+              'RF leaves with SVD': 'RF leaves', 'Raw K-Means': '$K$-Means, raw'}
     lines = [r'\begin{table}[ht]', r'\centering', r'\small',
              f'\\caption{{Sensitivity of the BTC default, one setting changed at a time (13 development benchmarks and {int(cc.sum())} OpenML-CC18 datasets with random class groupings, 5 seeds). Mean ARI, and the difference in mean ARI from the default over all {len(t)} datasets with a 95\\% bootstrap interval. The last two rows are comparators, not BTC settings.}}',
              r'\label{tab:sensitivity}', r'\begin{tabular}{lrrrrr@{,\ }r}', r'\toprule',
@@ -289,7 +289,7 @@ def confirmation():
               'BTC minus Per-feature sums': ('C1', 'BTC $-$ per-feature sums', 'PerFeature'),
               'Historic residuals minus Final margin': ('C2', 'Residual history $-$ final margin', 'ResMargin'),
               'Historic residuals minus Historic residuals, order shuffled': ('C2', 'Residual history $-$ shuffled order', 'ResOrder'),
-              'BTC minus RF leaves with SVD': ('C3', 'BTC $-$ RF leaves with SVD', 'RFSVD'),
+              'BTC minus RF leaves with SVD': ('C3', 'BTC $-$ RF leaves', 'RFSVD'),
               'BTC minus K-Means raw': ('C3', 'BTC $-$ $K$-Means, raw', 'KMRaw'),
               'BTC minus K-Means scaled': ('C3', 'BTC $-$ $K$-Means, standardized', 'KMScaled'),
               'BTC minus UMAP raw': ('C3', 'BTC $-$ UMAP, raw', 'UMAPRaw'),
@@ -321,7 +321,7 @@ def confirmation():
 
     # Figure: mean ARI with dataset-bootstrap intervals.
     methods = [('RFC spectral', 'Spectral RFC*'), ('TreeSHAP', 'TreeSHAP'), ('UMAP scaled', 'UMAP + $K$-Means, std.'), ('BTC', 'BTC'),
-               ('RF leaves with SVD', 'RF leaves + SVD'), ('UMAP raw', 'UMAP + $K$-Means, raw'), ('Per-feature sums', 'Per-feature sums'),
+               ('RF leaves with SVD', 'RF leaves'), ('UMAP raw', 'UMAP + $K$-Means, raw'), ('Per-feature sums', 'Per-feature sums'),
                ('K-Means scaled', '$K$-Means, std.'), ('Historic residuals', 'Residual history'), ('Final margin', 'Final margin'),
                ('K-Means raw', '$K$-Means, raw')]
     fig, ax = plt.subplots(figsize=(5.4, 3.5))
@@ -354,7 +354,7 @@ def confirmation():
     fig.savefig(os.path.join(FIGURES, 'scaling.pdf'))
     plt.close(fig)
 
-    header = r'\textbf{Dataset} & \textbf{ID} & \textbf{$N$} & \textbf{$K$} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} & \textbf{UMAP std.} & \textbf{$K$-M raw} & \textbf{$K$-M std.} \\'
+    header = r'\textbf{Dataset} & \textbf{ID} & \textbf{$N$} & \textbf{$K$} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF leaves} & \textbf{RFC} & \textbf{UMAP std.} & \textbf{$K$-M raw} & \textbf{$K$-M std.} \\'
     # Body in footnotesize so the eleven columns fit; the caption keeps the surrounding size.
     lines = [r'\begin{longtable}{>{\footnotesize}l' + r'>{\footnotesize}r' * 10 + '}',
              f'\\caption{{Confirmation results by dataset (mean ARI over three groupings and five seeds). ID is the OpenML dataset ID.}} \\label{{tab:confirmation_by_dataset}} \\\\',
@@ -394,7 +394,7 @@ def tcga():
     lines = [r'\begin{table}[t]', r'\centering', r'\small',
              r'\caption{TCGA, organ system to cancer type. Mean ARI over 5 seeds for each grouping of related cancer types (proxy: the group versus all other cancers; subtypes: its cancer types). The last two rows average over the six real groupings and over their random counterparts, three random groupings with the same number of cancer types for each real grouping.}',
              r'\label{tab:tcga_a}', r'\begin{tabular}{lrrrrrr}', r'\toprule',
-             r'\textbf{Grouping} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} & \textbf{$K$-M raw} & \textbf{$K$-M std.} \\', r'\midrule']
+             r'\textbf{Grouping} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF leaves} & \textbf{RFC} & \textbf{$K$-M raw} & \textbf{$K$-M std.} \\', r'\midrule']
     for task, row in real.iterrows():
         lines.append(f'{task} & ' + ' & '.join(f3(row[m]) for m in methods) + r' \\')
     lines.append(r'\midrule')
@@ -446,7 +446,7 @@ def tcga():
              r'\label{tab:tcga_b}', r'\footnotesize', r'\setlength{\tabcolsep}{4pt}', r'\begin{tabular}{lrrrrrrrrr}', r'\toprule',
              r'& & \multicolumn{4}{c}{\textbf{Cohort versus rest}} & \multicolumn{4}{c}{\textbf{Within-cohort proxies}} \\',
              r'\cmidrule(lr){3-6} \cmidrule(lr){7-10}',
-             r'\textbf{Cancer type} & \textbf{$K$} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} \\', r'\midrule']
+             r'\textbf{Cancer type} & \textbf{$K$} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF leaves} & \textbf{RFC} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF leaves} & \textbf{RFC} \\', r'\midrule']
     kk = h[(h.Level == 'B')].groupby('Task').K.first()
     for task in b.index:
         wm = within_mean.loc[task] if task in within_mean.index else pd.Series({m: np.nan for m in sup})
@@ -465,7 +465,7 @@ def tcga():
     lines = [r'\begin{table}[ht]', r'\centering', r'\small',
              r'\caption{TCGA within-cohort proxies: mean gain over the better of raw and standardized $K$-Means by proxy type. Cancer types is the number of cancer types in which the proxy met the size rules (\Cref{app:biomed}); the last row averages over all cancer type--proxy pairs.}', r'\label{tab:within_proxy}',
              r'\begin{tabular}{lrrrrr}', r'\toprule',
-             r'\textbf{Proxy} & \textbf{Cancer types} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} \\', r'\midrule']
+             r'\textbf{Proxy} & \textbf{Cancer types} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF leaves} & \textbf{RFC} \\', r'\midrule']
     for p, row in by_proxy.sort_values('BTC', ascending=False).iterrows():
         lines.append(f'{names[p]} & {counts[p]} & ' + ' & '.join(f3(row[c]) for c in ['BTC', 'TreeSHAP', 'RF leaves with SVD', 'RFC spectral']) + r' \\')
     lines += [r'\midrule', f'All proxies ({len(wg)} pairs) & {wg.Task.nunique()} & '
@@ -496,7 +496,7 @@ def proximities():
     parts.append(('TCGA within-cohort proxies', w, wo[['K-Means raw', 'K-Means scaled']].max(axis=1), wo['BTC']))
 
     lines = [r'\begin{table}[t]', r'\centering', r'\small',
-             r'\caption{Exploratory comparison of Random Forest proximities, each followed by exact spectral clustering with the true $K$. Mean ARI, with BTC and the better of raw and standardized $K$-Means from the original runs on the same tasks (same seeds) for reference. The out-of-bag variant is the separable approximation of \citet{aumon2026scalable}.}',
+             r'\caption{Exploratory comparison of random forest proximities, each followed by exact spectral clustering with the true $K$. Mean ARI, with BTC and the better of raw and standardized $K$-Means from the original runs on the same tasks (same seeds) for reference. The out-of-bag variant is the separable approximation of \citet{aumon2026scalable}.}',
              r'\label{tab:proximities}', r'\begin{tabular}{lrrrrr}', r'\toprule',
              r'\textbf{Data} & \textbf{Breiman} & \textbf{Out-of-bag} & \textbf{RF-GAP} & \textbf{BTC} & \textbf{Better $K$-Means} \\', r'\midrule']
     for label, frame, best, btc in parts:
@@ -655,7 +655,7 @@ def alignment():
              r'Alignment (AMI) & ' + ' & '.join(f3(v) for v in ami.values) + r' \\', r'\midrule']
     for m, _ in methods:
         row = a2[a2.Method == m].set_index('Noise').Estimate
-        lines.append(f'{latex_name({"RFC spectral": "Spectral RFC"}.get(m, m))} & ' + ' & '.join(f3(row[q]) for q in ami.index) + r' \\')
+        lines.append(f'{latex_name({"RFC spectral": "Spectral RFC", "RF leaves with SVD": "RF leaves"}.get(m, m))} & ' + ' & '.join(f3(row[q]) for q in ami.index) + r' \\')
     lines += [r'\bottomrule', r'\end{tabular}', r'\end{table}']
     write('alignment.tex', lines)
 
