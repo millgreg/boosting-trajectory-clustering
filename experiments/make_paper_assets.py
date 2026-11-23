@@ -80,33 +80,39 @@ def style(ax):
 def development():
     d = pd.read_csv(os.path.join(RES, 'history_study_development.csv'))
     t = d.groupby(['Dataset', 'Method']).ARI.mean().unstack()
+    # Order follows the paper: BTC and its variants, the other supervised representations, the
+    # unsupervised baselines, the history representations (Section 6.7), and the control last.
     rows = [('Boosting', 'BTC tree updates', 'BTC (per-tree updates)'),
-            ('Boosting', 'Stump leaves, unweighted', 'Stump leaves, unweighted'),
+            ('Boosting', 'Stump leaves, unweighted', 'Stump leaves, unweighted$^a$'),
             ('Boosting', 'Per-feature sums, SHAP-equivalent', 'Per-feature sums'),
-            ('Boosting', 'TreeSHAP, XGBoost depth 3', 'TreeSHAP (depth 3)'),
+            ('Other supervised', 'TreeSHAP, XGBoost depth 3', 'TreeSHAP, depth 3, unstandardized$^b$'),
+            ('Other supervised', 'RF leaves with SVD', 'RF leaves with SVD'),
+            ('Other supervised', 'RFC spectral', 'Spectral RFC'),
+            ('Unsupervised', 'Raw K-Means', '$K$-Means, raw'),
+            ('Unsupervised', 'K-Means scaled', '$K$-Means, standardized'),
+            ('Unsupervised', 'UMAP + K-Means', 'UMAP + $K$-Means, raw'),
+            ('Unsupervised', 'UMAP scaled + K-Means', 'UMAP + $K$-Means, standardized'),
             ('History', 'Historic residuals', 'Pseudo-residual history'),
             ('History', 'Historic residuals, order shuffled', 'Pseudo-residuals, tree order shuffled'),
             ('History', 'Residual change', 'Round-to-round residual change'),
             ('History', 'Learning-speed summaries', 'Learning-speed summaries'),
             ('History', 'Final margin', 'Final margin only'),
-            ('Control', 'BTC, permuted proxy labels', 'BTC, permuted proxy labels'),
-            ('Forest', 'RF leaves with SVD', 'RF leaves with SVD'),
-            ('Forest', 'RFC spectral', 'Spectral RFC'),
-            ('Unsupervised', 'Raw K-Means', '$K$-Means, raw features'),
-            ('Unsupervised', 'K-Means scaled', '$K$-Means, standardized'),
-            ('Unsupervised', 'UMAP + K-Means', 'UMAP + $K$-Means, raw'),
-            ('Unsupervised', 'UMAP scaled + K-Means', 'UMAP + $K$-Means, standardized')]
+            ('Control', 'BTC, permuted proxy labels', 'BTC, permuted proxy labels$^c$')]
     lines = [r'\begin{table}[t]', r'\centering', r'\small',
-             r'\caption{Development benchmarks (13 datasets, 30 seeds). Mean ARI across datasets and the difference from BTC with a 95\% bootstrap interval over datasets. These datasets informed all design choices and are not used for confirmatory claims.}',
-             r'\label{tab:development}', r'\begin{tabular}{llcc}', r'\toprule',
-             r'& \textbf{Representation} & \textbf{Mean ARI} & \textbf{Method minus BTC [95\% CI]} \\', r'\midrule']
+             r'\caption{Development benchmarks (13 datasets, 30 seeds). Mean ARI across datasets, and the difference in mean ARI from BTC with a 95\% bootstrap interval over datasets. These datasets informed all design choices and are not used for confirmatory claims. $^a$$K$-Means on the binary leaf assignments of the BTC stumps, which equals BTC with every tree weight in \Cref{prop:stumps} set to one. $^b$The initial TreeSHAP setup; the setup used from confirmation onward was selected afterwards as the best of \ShapNSetups{} setups (\Cref{tab:shap}). $^c$BTC with the proxy labels randomly permuted before training.}',
+             r'\label{tab:development}', r'\begin{tabular}{llrrr@{,\ }r}', r'\toprule',
+             r'& \textbf{Representation} & \textbf{Mean ARI} & \textbf{Difference} & \multicolumn{2}{c}{\textbf{95\% CI}} \\', r'\midrule']
     last = None
     for group, key, label in rows:
         if last is not None and group != last:
             lines.append(r'\addlinespace')
         diff = t[key] - t['BTC tree updates']
-        cell = '--' if key == 'BTC tree updates' else f'{f3(diff.mean())} [{f3(bootstrap(diff)[0])}, {f3(bootstrap(diff)[1])}]'
-        lines.append(f'{group if group != last else ""} & {label} & {f3(t[key].mean())} & {cell} \\\\')
+        if key == 'BTC tree updates':
+            cells = r'-- & \multicolumn{2}{c}{}'
+        else:
+            lo, hi = bootstrap(diff)
+            cells = f'{f3(diff.mean())} & [{f3(lo)} & {f3(hi)}]'
+        lines.append(f'{group if group != last else ""} & {label} & {f3(t[key].mean())} & {cells} \\\\')
         last = group
     lines += [r'\bottomrule', r'\end{tabular}', r'\end{table}']
     write('development.tex', lines)
@@ -139,17 +145,21 @@ def development():
                'vehicle': 'Vehicle types'}
     meta = d.groupby('Dataset')[['N_full', 'N_target', 'N_features', 'K']].first()
     lines = [r'\begin{table}[ht]', r'\centering', r'\small',
-             r'\caption{Development benchmarks. $N$ is the number of samples used to train the proxy model, $N_{\text{target}}$ the cohort that is clustered, $P$ the number of features after preprocessing, and $K$ the number of subtypes. BRCA and GBMLGG cluster all samples (cross-cutting proxy); the others cluster the $y=1$ class. $^\dagger$Arbitrary proxy: the first class in sorted order.}',
-             r'\label{tab:datasets}', r'\setlength{\tabcolsep}{4pt}', r'\begin{tabular}{lrrrrll}', r'\toprule',
-             r'\textbf{Dataset} & $N$ & $N_{\text{target}}$ & $P$ & $K$ & \textbf{Proxy ($y=0$ vs.\ $y=1$)} & \textbf{Subtypes} \\', r'\midrule']
+             r'\caption{Development benchmarks. OpenML ID is the dataset\textquoteright s ID on OpenML (-- for datasets obtained from TCGA or Scanpy instead). $N$ is the number of samples used to train the proxy model, $N_{\text{target}}$ the cohort that is clustered, $P$ the number of features after preprocessing, and $K$ the number of subtypes. BRCA and GBMLGG use a within-cohort proxy and cluster all samples; the others use a cohort-versus-rest proxy and cluster the $y=1$ class. $^\dagger$Arbitrary proxy: the first class in sorted order.}',
+             r'\label{tab:datasets}', r'\setlength{\tabcolsep}{3pt}', r'\begin{tabular}{lrrrrrll}', r'\toprule',
+             r'\textbf{Dataset} & \textbf{OpenML ID} & $N$ & $N_{\text{target}}$ & $P$ & $K$ & \textbf{Proxy ($y=0$ vs.\ $y=1$)} & \textbf{Subtypes} \\', r'\midrule']
+    # OpenML IDs as loaded in experiments/dataset_loader.py and data/*/preprocess_*.py; TCGA and
+    # Paul15 are not loaded from OpenML.
+    openml_ids = {'arrhythmia': 5, 'ctg': 1560, 'dermatology': 35, 'diabetes': 4541, 'har': 1478, 'leukemia': 45092,
+                  'mice': 40966, 'segment': 36, 'thyroid': 57, 'vehicle': 54}
     for ds, row in meta.iterrows():
-        lines.append(f'{DEV_NAMES[ds]} & {int(row.N_full):,} & {int(row.N_target):,} & {int(row.N_features):,} & {int(row.K)} & {proxies[ds]} & {targets[ds]} \\\\'.replace(',', '{,}'))
+        lines.append(f'{DEV_NAMES[ds]} & {openml_ids.get(ds, "--")} & {int(row.N_full):,} & {int(row.N_target):,} & {int(row.N_features):,} & {int(row.K)} & {proxies[ds]} & {targets[ds]} \\\\'.replace(',', '{,}'))
     lines += [r'\bottomrule', r'\end{tabular}', r'\end{table}']
     write('datasets.tex', lines)
 
-    lines = [r'\begin{table}[ht]', r'\centering', r'\scriptsize', r'\setlength{\tabcolsep}{3pt}',
-             r'\caption{Development benchmarks by dataset (mean ARI over 30 seeds).}', r'\label{tab:development_by_dataset}',
-             r'\begin{tabular}{lcccccccc}', r'\toprule',
+    lines = [r'\begin{table}[ht]', r'\centering', r'\small',
+             r'\caption{Development benchmarks by dataset (mean ARI over 30 seeds). TreeSHAP is the initial setup with depth-3 trees and without standardization, as in \Cref{tab:development}.}', r'\label{tab:development_by_dataset}',
+             r'\scriptsize', r'\setlength{\tabcolsep}{3pt}', r'\begin{tabular}{lrrrrrrrr}', r'\toprule',
              r'\textbf{Dataset} & \textbf{BTC} & \textbf{Per-feat.} & \textbf{TreeSHAP} & \textbf{Residuals} & \textbf{RF SVD} & \textbf{RFC} & \textbf{$K$-M raw} & \textbf{$K$-M std.} \\', r'\midrule']
     cols = ['BTC tree updates', 'Per-feature sums, SHAP-equivalent', 'TreeSHAP, XGBoost depth 3', 'Historic residuals',
             'RF leaves with SVD', 'RFC spectral', 'Raw K-Means', 'K-Means scaled']
@@ -188,15 +198,27 @@ def sensitivity():
     order = ['Default', 'Trees 50', 'Trees 300', 'Learning rate 0.05', 'Learning rate 0.3', 'Depth 2', 'Depth 3',
              'Features all', 'Features 10%', 'Row subsample 0.5', 'Rescaled per tree', 'Agglomerative backend',
              'RF leaves with SVD', 'Raw K-Means']
+    labels = {'Default': 'Default', 'Trees 50': '50 trees', 'Trees 300': '300 trees',
+              'Learning rate 0.05': 'Learning rate 0.05', 'Learning rate 0.3': 'Learning rate 0.3',
+              'Depth 2': 'Tree depth 2', 'Depth 3': 'Tree depth 3', 'Features all': 'All features at each split',
+              'Features 10%': r'10\% of features at each split', 'Row subsample 0.5': 'Half of the rows per tree',
+              'Rescaled per tree': 'Updates standardized per tree', 'Agglomerative backend': 'Ward clustering instead of $K$-Means',
+              'RF leaves with SVD': 'RF leaves with SVD', 'Raw K-Means': '$K$-Means, raw'}
     lines = [r'\begin{table}[ht]', r'\centering', r'\small',
-             f'\\caption{{Sensitivity of the BTC default, one setting changed at a time (13 benchmarks and {int(cc.sum())} OpenML-CC18 datasets with random class groupings, 5 seeds). Mean ARI, and the difference from the default over all {len(t)} datasets with a 95\\% bootstrap interval.}}',
-             r'\label{tab:sensitivity}', r'\begin{tabular}{lcccc}', r'\toprule',
-             r'\textbf{Setting} & \textbf{13 benchmarks} & \textbf{CC18} & \textbf{All} & \textbf{Minus default [95\% CI]} \\', r'\midrule']
+             f'\\caption{{Sensitivity of the BTC default, one setting changed at a time (13 development benchmarks and {int(cc.sum())} OpenML-CC18 datasets with random class groupings, 5 seeds). Mean ARI, and the difference in mean ARI from the default over all {len(t)} datasets with a 95\\% bootstrap interval. The last two rows are comparators, not BTC settings.}}',
+             r'\label{tab:sensitivity}', r'\begin{tabular}{lrrrrr@{,\ }r}', r'\toprule',
+             r'& \multicolumn{3}{c}{\textbf{Mean ARI}} & & \multicolumn{2}{c}{} \\', r'\cmidrule(lr){2-4}',
+             r'\textbf{Setting} & \textbf{13 benchmarks} & \textbf{CC18} & \textbf{All} & \textbf{Difference} & \multicolumn{2}{c}{\textbf{95\% CI}} \\', r'\midrule']
     for m in order:
+        if m == 'RF leaves with SVD':
+            lines.append(r'\addlinespace')
         diff = t[m] - t['Default']
-        cell = '--' if m == 'Default' else f'{f3(diff.mean())} [{f3(bootstrap(diff)[0])}, {f3(bootstrap(diff)[1])}]'
-        label = latex_name(m.replace('Features', 'Feature subsampling').replace('Rescaled per tree', 'Updates standardized per tree'))
-        lines.append(f'{label} & {f3(t.loc[~cc, m].mean())} & {f3(t.loc[cc, m].mean())} & {f3(t[m].mean())} & {cell} \\\\')
+        if m == 'Default':
+            cells = r'-- & \multicolumn{2}{c}{}'
+        else:
+            lo, hi = bootstrap(diff)
+            cells = f'{f3(diff.mean())} & [{f3(lo)} & {f3(hi)}]'
+        lines.append(f'{labels[m]} & {f3(t.loc[~cc, m].mean())} & {f3(t.loc[cc, m].mean())} & {f3(t[m].mean())} & {cells} \\\\')
     lines += [r'\bottomrule', r'\end{tabular}', r'\end{table}']
     write('sensitivity.tex', lines)
     num('SensNCC', int(cc.sum()))
@@ -215,8 +237,8 @@ def shap_setups():
     num('ShapDevDiff', x.mean()); ci('ShapDevDiff', *bootstrap(x))
     num('ShapDevBest', t[best].mean())
     lines = [r'\begin{table}[ht]', r'\centering', r'\small',
-             f'\\caption{{TreeSHAP clustering setups on the 13 benchmarks (10 seeds), ranked by mean ARI. The best setup was frozen as the TreeSHAP comparator for confirmation; BTC scored {f3(t["BTC"].mean())}.}}',
-             r'\label{tab:shap}', r'\begin{tabular}{lccc}', r'\toprule',
+             f'\\caption{{TreeSHAP clustering setups on the 13 development benchmarks (10 seeds), ranked by mean ARI. The best setup was frozen as the TreeSHAP comparator for confirmation; BTC scored {f3(t["BTC"].mean())}.}}',
+             r'\label{tab:shap}', r'\begin{tabular}{cclr}', r'\toprule',
              r'\textbf{Tree depth} & \textbf{Column subsampling} & \textbf{Clustering} & \textbf{Mean ARI} \\', r'\midrule']
     for m, v in t.drop(columns='BTC').mean().sort_values(ascending=False).items():
         depth, cols, how = m.replace('TreeSHAP depth ', '').split(', ')
@@ -258,6 +280,10 @@ def confirmation():
                       ('RFC spectral', 'RFC'), ('K-Means raw', 'KMRaw'), ('K-Means scaled', 'KMScaled'), ('UMAP raw', 'UMAPRaw'),
                       ('UMAP scaled', 'UMAPScaled'), ('Historic residuals', 'Residual'), ('Final margin', 'Margin')]:
         num('Conf' + name, t[key].mean())
+    # Median wall-clock time per run (model fit, representation, and clustering, one core per run).
+    times = pd.concat([m[['Method', 'Time_s']], r[['Method', 'Time_s']]]).dropna().groupby('Method').Time_s.median()
+    for key, name in [('BTC', 'BTC'), ('TreeSHAP', 'Shap'), ('RF leaves with SVD', 'RFSVD'), ('RFC spectral', 'RFC')]:
+        num('ConfTime' + name, times[key], 1)
 
     labels = {'BTC minus TreeSHAP': ('C1', 'BTC $-$ TreeSHAP', 'Shap'),
               'BTC minus Per-feature sums': ('C1', 'BTC $-$ per-feature sums', 'PerFeature'),
@@ -269,20 +295,20 @@ def confirmation():
               'BTC minus UMAP raw': ('C3', 'BTC $-$ UMAP, raw', 'UMAPRaw'),
               'BTC minus UMAP scaled': ('C3', 'BTC $-$ UMAP, standardized', 'UMAPScaled')}
     lines = [r'\begin{table}[t]', r'\centering', r'\small',
-             f'\\caption{{Confirmation on {t.shape[0]} held-out OpenML datasets with random class groupings, analysed exactly as pre-specified. Differences in mean ARI with 95\\% bootstrap intervals over datasets; a difference is claimed only when the interval excludes zero. Spectral RFC was added after the protocol was frozen and is exploratory.}}',
-             r'\label{tab:confirmation}', r'\setlength{\tabcolsep}{4pt}', r'\begin{tabular}{llccc}', r'\toprule',
-             r'\textbf{Claim} & \textbf{Comparison} & \textbf{Difference [95\% CI]} & \textbf{A higher / lower} & \textbf{Verdict} \\', r'\midrule']
+             f'\\caption{{Confirmation on {t.shape[0]} held-out OpenML datasets with random class groupings, analysed exactly as pre-specified. Differences in mean ARI with 95\\% bootstrap intervals over datasets; a difference is claimed only when the interval excludes zero. Higher and lower: the number of datasets on which the first method of the comparison scored higher or lower than the second; differences below 0.0005 count as ties and appear in neither column. Spectral RFC was added after the protocol was frozen and is exploratory.}}',
+             r'\label{tab:confirmation}', r'\setlength{\tabcolsep}{4pt}', r'\begin{tabular}{llrr@{,\ }rrrl}', r'\toprule',
+             r'\textbf{Claim} & \textbf{Comparison} & \textbf{Difference} & \multicolumn{2}{c}{\textbf{95\% CI}} & \textbf{Higher} & \textbf{Lower} & \textbf{Verdict} \\', r'\midrule']
     for _, row in s.iterrows():
         claim, label, name = labels[row.Comparison]
         status = row.Claim.split()[1]
         verdict = 'difference' if row.Verdict == 'difference' else 'no claim'
-        lines.append(f'{claim} ({status}) & {label} & {f3(row.Difference)} [{f3(row.Lower)}, {f3(row.Upper)}] & {row["A higher on"]} / {row["A lower on"]} & {verdict} \\\\')
+        lines.append(f'{claim} ({status}) & {label} & {f3(row.Difference)} & [{f3(row.Lower)} & {f3(row.Upper)}] & {row["A higher on"]} & {row["A lower on"]} & {verdict} \\\\')
         num('Conf' + name + 'Diff', row.Difference); ci('Conf' + name + 'Diff', row.Lower, row.Upper)
     x = t['BTC'] - t['RFC spectral']
     lo, hi = bootstrap(x)
     lines.append(r'\midrule')
     verdict = 'difference' if lo > 0 or hi < 0 else 'no claim'
-    lines.append(f'Exploratory & BTC $-$ spectral RFC & {f3(x.mean())} [{f3(lo)}, {f3(hi)}] & {int((x > 5e-4).sum())} / {int((x < -5e-4).sum())} & {verdict} \\\\')
+    lines.append(f'Exploratory & BTC $-$ spectral RFC & {f3(x.mean())} & [{f3(lo)} & {f3(hi)}] & {int((x > 5e-4).sum())} & {int((x < -5e-4).sum())} & {verdict} \\\\')
     num('ConfRFCDiff', x.mean()); ci('ConfRFCDiff', lo, hi); num('ConfRFCLower', int((x < -5e-4).sum()))
     lines += [r'\bottomrule', r'\end{tabular}', r'\end{table}']
     write('confirmation.tex', lines)
@@ -328,15 +354,16 @@ def confirmation():
     fig.savefig(os.path.join(FIGURES, 'scaling.pdf'))
     plt.close(fig)
 
-    header = r'\textbf{Dataset} & \textbf{$N$} & \textbf{$K$} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} & \textbf{UMAP std.} & \textbf{$K$-M raw} & \textbf{$K$-M std.} \\'
-    lines = [r'\begin{longtable}{lrrccccccc}',
-             f'\\caption{{Confirmation results by dataset (mean ARI over three groupings and five seeds).}} \\label{{tab:confirmation_by_dataset}} \\\\',
+    header = r'\textbf{Dataset} & \textbf{ID} & \textbf{$N$} & \textbf{$K$} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} & \textbf{UMAP std.} & \textbf{$K$-M raw} & \textbf{$K$-M std.} \\'
+    # Body in footnotesize so the eleven columns fit; the caption keeps the surrounding size.
+    lines = [r'\begin{longtable}{>{\footnotesize}l' + r'>{\footnotesize}r' * 10 + '}',
+             f'\\caption{{Confirmation results by dataset (mean ARI over three groupings and five seeds). ID is the OpenML dataset ID.}} \\label{{tab:confirmation_by_dataset}} \\\\',
              r'\toprule', header, r'\midrule', r'\endfirsthead',
-             r'\multicolumn{10}{l}{\textit{Continued from the previous page}} \\', r'\toprule', header, r'\midrule', r'\endhead']
+             r'\multicolumn{11}{l}{\textit{Continued from the previous page}} \\', r'\toprule', header, r'\midrule', r'\endhead']
     meta = m.groupby('did')[['N_full', 'K']].agg({'N_full': 'first', 'K': 'max'})
     for (did, name), row in t.iterrows():
         cells = ' & '.join(f3(row[c]) for c in ['BTC', 'TreeSHAP', 'RF leaves with SVD', 'RFC spectral', 'UMAP scaled', 'K-Means raw', 'K-Means scaled'])
-        lines.append(f'{latex_name(name[:26])} &{int(meta.loc[did, "N_full"])} & {int(meta.loc[did, "K"])} & {cells} \\\\')
+        lines.append(f'{latex_name(name[:26])} & {int(did)} & {int(meta.loc[did, "N_full"]):,} & {int(meta.loc[did, "K"])} & {cells} \\\\')
     lines += [r'\bottomrule', r'\end{longtable}']
     write('confirmation_by_dataset.tex', lines)
 
@@ -348,7 +375,7 @@ def confirmation():
         .str.replace('mostly missing', 'At least 50\\% missing values')
     lines = [r'\begin{table}[ht]', r'\centering', r'\small',
              f'\\caption{{Exclusions while building the confirmation set ({len(audit)} candidates, {t.shape[0]} included). A dataset can have several reasons.}}',
-             r'\label{tab:audit}', r'\begin{tabular}{lc}', r'\toprule', r'\textbf{Reason} & \textbf{Datasets} \\', r'\midrule']
+             r'\label{tab:audit}', r'\begin{tabular}{lr}', r'\toprule', r'\textbf{Reason} & \textbf{Datasets} \\', r'\midrule']
     for reason, n in reasons.value_counts().items():
         lines.append(f'{reason} & {n} \\\\')
     lines += [r'\bottomrule', r'\end{tabular}', r'\end{table}']
@@ -366,7 +393,7 @@ def tcga():
     random = a.xs('random', level='Proxy').groupby('Task').mean()
     lines = [r'\begin{table}[t]', r'\centering', r'\small',
              r'\caption{TCGA, organ system to cancer type. Mean ARI over 5 seeds for each grouping of related cancer types (proxy: the group versus all other cancers; subtypes: its cancer types), with the mean over three random groupings of the same size in the last row.}',
-             r'\label{tab:tcga_a}', r'\begin{tabular}{lcccccc}', r'\toprule',
+             r'\label{tab:tcga_a}', r'\begin{tabular}{lrrrrrr}', r'\toprule',
              r'\textbf{Grouping} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} & \textbf{$K$-M raw} & \textbf{$K$-M std.} \\', r'\midrule']
     for task, row in real.iterrows():
         lines.append(f'{task} & ' + ' & '.join(f3(row[m]) for m in methods) + r' \\')
@@ -412,17 +439,21 @@ def tcga():
     num('WithinER', er.get('er', np.nan)); num('WithinPR', er.get('pr', np.nan))
 
     # Subtype tasks: one table with the cohort-versus-rest gain and the mean within-cohort gain.
-    within_mean = wg.groupby('Task')[['BTC', 'RF leaves with SVD', 'RFC spectral']].mean()
+    sup = ['BTC', 'TreeSHAP', 'RF leaves with SVD', 'RFC spectral']
+    within_mean = wg.groupby('Task')[sup].mean()
     lines = [r'\begin{table}[t]', r'\centering', r'\small',
-             r'\caption{TCGA, cancer type to molecular subtype. Gain in ARI over the better of raw and standardized $K$-Means on the same cohort, for the cohort-versus-rest proxy and averaged over the within-cohort clinical proxies.}',
-             r'\label{tab:tcga_b}', r'\begin{tabular}{lrcccccc}', r'\toprule',
-             r'& & \multicolumn{3}{c}{\textbf{Cohort versus rest}} & \multicolumn{3}{c}{\textbf{Within-cohort proxies}} \\',
-             r'\cmidrule(lr){3-5} \cmidrule(lr){6-8}',
-             r'\textbf{Cancer type} & \textbf{$K$} & \textbf{BTC} & \textbf{RF SVD} & \textbf{RFC} & \textbf{BTC} & \textbf{RF SVD} & \textbf{RFC} \\', r'\midrule']
+             r'\caption{TCGA, cancer type to molecular subtype. Gain in ARI over the better of raw and standardized $K$-Means on the same cohort, for the cohort-versus-rest proxy and averaged over the within-cohort clinical proxies of each cancer type. The last row gives the pre-specified mean gains: over cancer types for the cohort-versus-rest proxy, and over all cancer type--proxy pairs for the within-cohort proxies. Melanoma (SKCM) had no within-cohort proxy meeting the size rules (\Cref{app:biomed}).}',
+             r'\label{tab:tcga_b}', r'\footnotesize', r'\setlength{\tabcolsep}{4pt}', r'\begin{tabular}{lrrrrrrrrr}', r'\toprule',
+             r'& & \multicolumn{4}{c}{\textbf{Cohort versus rest}} & \multicolumn{4}{c}{\textbf{Within-cohort proxies}} \\',
+             r'\cmidrule(lr){3-6} \cmidrule(lr){7-10}',
+             r'\textbf{Cancer type} & \textbf{$K$} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} \\', r'\midrule']
     kk = h[(h.Level == 'B')].groupby('Task').K.first()
     for task in b.index:
-        wm = within_mean.loc[task] if task in within_mean.index else pd.Series({'BTC': np.nan, 'RF leaves with SVD': np.nan, 'RFC spectral': np.nan})
-        lines.append(f'{task.replace("_", "/")} & {int(kk.loc[task])} & {f3(gains_b.loc[task, "BTC"])} & {f3(gains_b.loc[task, "RF leaves with SVD"])} & {f3(gains_b.loc[task, "RFC spectral"])} & {f3(wm["BTC"])} & {f3(wm["RF leaves with SVD"])} & {f3(wm["RFC spectral"])} \\\\')
+        wm = within_mean.loc[task] if task in within_mean.index else pd.Series({m: np.nan for m in sup})
+        lines.append(f'{task.replace("_", "/")} & {int(kk.loc[task])} & ' + ' & '.join(f3(gains_b.loc[task, m]) for m in sup) + ' & '
+                     + ' & '.join(f3(wm[m]) for m in sup) + r' \\')
+    lines += [r'\midrule', r'Mean & & ' + ' & '.join(f3(gains_b.loc[list(b.index), m].mean()) for m in sup) + ' & '
+              + ' & '.join(f3(wg[m].mean()) for m in sup) + r' \\']
     lines += [r'\bottomrule', r'\end{tabular}', r'\end{table}']
     write('tcga_subtypes.tex', lines)
 
@@ -433,32 +464,14 @@ def tcga():
              'survival': 'Death during follow-up'}
     lines = [r'\begin{table}[ht]', r'\centering', r'\small',
              r'\caption{TCGA within-cohort proxies: mean gain over the better $K$-Means baseline by proxy type.}', r'\label{tab:within_proxy}',
-             r'\begin{tabular}{lccccc}', r'\toprule',
+             r'\begin{tabular}{lrrrrr}', r'\toprule',
              r'\textbf{Proxy} & \textbf{Cancer types} & \textbf{BTC} & \textbf{TreeSHAP} & \textbf{RF SVD} & \textbf{RFC} \\', r'\midrule']
     for p, row in by_proxy.sort_values('BTC', ascending=False).iterrows():
         lines.append(f'{names[p]} & {counts[p]} & ' + ' & '.join(f3(row[c]) for c in ['BTC', 'TreeSHAP', 'RF leaves with SVD', 'RFC spectral']) + r' \\')
+    lines += [r'\midrule', f'All proxies ({len(wg)} pairs) & {wg.Task.nunique()} & '
+              + ' & '.join(f3(wg[c].mean()) for c in ['BTC', 'TreeSHAP', 'RF leaves with SVD', 'RFC spectral']) + r' \\']
     lines += [r'\bottomrule', r'\end{tabular}', r'\end{table}']
     write('within_proxy.tex', lines)
-
-    # Figure: per-task gains for BTC and spectral RFC, both TCGA designs.
-    order = gains_b.sort_values('BTC').index
-    fig, axes = plt.subplots(1, 2, figsize=(6.6, 4.1), sharey=True)
-    for ax, (title, frame) in zip(axes, [('Cohort versus rest', gains_b), ('Within-cohort proxies (mean)', within_mean)]):
-        ys = np.arange(len(order))
-        ax.axvline(0, color=INK2, linewidth=0.8)
-        for col, color, label in [('BTC', BLUE, 'BTC'), ('RFC spectral', ORANGE, 'Spectral RFC')]:
-            vals = frame.reindex(order)[col].values
-            ax.plot(vals, ys, 'o', color=color, markersize=4.5, markeredgecolor='white', markeredgewidth=0.6, label=label)
-        ax.set_title(title, fontsize=9, color=INK)
-        ax.set_xlabel('ARI gain over best $K$-Means', color=INK2, fontsize=8)
-        style(ax)
-    axes[0].set_yticks(np.arange(len(order)))
-    axes[0].set_yticklabels([o.replace('_', '/') for o in order])
-    handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, frameon=False, fontsize=8, loc='upper center', ncol=2, bbox_to_anchor=(0.55, 1.0))
-    fig.tight_layout(rect=(0, 0, 1, 0.94))
-    fig.savefig(os.path.join(FIGURES, 'tcga_gains.pdf'))
-    plt.close(fig)
 
 
 def proximities():
@@ -484,7 +497,7 @@ def proximities():
 
     lines = [r'\begin{table}[t]', r'\centering', r'\small',
              r'\caption{Exploratory comparison of Random Forest proximities, each followed by exact spectral clustering with the true $K$. Mean ARI, with BTC and the better of raw and standardized $K$-Means from the original runs on the same tasks (same seeds) for reference. The out-of-bag variant is the separable approximation of \citet{aumon2026scalable}.}',
-             r'\label{tab:proximities}', r'\begin{tabular}{lccccc}', r'\toprule',
+             r'\label{tab:proximities}', r'\begin{tabular}{lrrrrr}', r'\toprule',
              r'\textbf{Data} & \textbf{Breiman} & \textbf{Out-of-bag} & \textbf{RF-GAP} & \textbf{BTC} & \textbf{Better $K$-Means} \\', r'\midrule']
     for label, frame, best, btc in parts:
         lines.append(f'{label} & ' + ' & '.join(f3(frame[v].mean()) for v, _ in variants) + f' & {f3(btc.mean())} & {f3(best.mean())} \\\\')
@@ -524,7 +537,7 @@ def unknown_k():
                ('K-Means raw', '$K$-Means raw'), ('K-Means scaled', '$K$-Means std.')]
     lines = [r'\begin{table}[t]', r'\centering', r'\footnotesize', r'\setlength{\tabcolsep}{3pt}',
              r'\caption{Exploratory analysis with an estimated number of subtypes. Each method chooses $K$ between 2 and 15 by the silhouette score of its own representation. Mean ARI at the chosen $K$, with the mean ARI at the true $K$ on the same tasks in parentheses (3 seeds).}',
-             r'\label{tab:unknown_k}', r'\begin{tabular}{l' + 'c' * len(methods) + '}', r'\toprule',
+             r'\label{tab:unknown_k}', r'\begin{tabular}{l' + 'r' * len(methods) + '}', r'\toprule',
              r'\textbf{Data} & ' + ' & '.join(rf'\textbf{{{label}}}' for _, label in methods) + r' \\', r'\midrule']
     for part, label in parts:
         lines.append(f'{label} & ' + ' & '.join(
@@ -574,16 +587,22 @@ def gtex():
                ('K-Means raw', '$K$-Means raw'), ('K-Means scaled', '$K$-Means std.')]
     tissue = t.loc['tissue'].droplevel('Proxy')
     within = t.loc['within']
-    lines = [r'\begin{table}[t]', r'\centering', r'\footnotesize', r'\setlength{\tabcolsep}{3pt}',
+    lines = [r'\begin{table}[t]', r'\centering', r'\small',
              r"\caption{GTEx, proxy ``this tissue versus all others'' with the sampling sites as subtypes."
-             r' Mean ARI over 5 seeds. The last row averages the negative-control proxies measured within each tissue (sex, age group, death on a ventilator, ischemic time).}',
-             r'\label{tab:gtex}', r'\begin{tabular}{lrr' + 'c' * len(methods) + '}', r'\toprule',
+             r' Mean ARI over 5 seeds for each tissue. Below, the mean ARI and the mean gain over the better of raw and standardized $K$-Means, for the tissues and for the negative-control proxies measured within each tissue (sex, age group, death on a ventilator, ischemic time; \GtexPairs{} tissue--proxy pairs).}',
+             r'\label{tab:gtex}', r'\footnotesize', r'\setlength{\tabcolsep}{3pt}', r'\begin{tabular}{lrr' + 'r' * len(methods) + '}', r'\toprule',
              r'\textbf{Tissue} & $K$ & $N$ & ' + ' & '.join(rf'\textbf{{{label}}}' for _, label in methods) + r' \\', r'\midrule']
     for name, row in tissue.iterrows():
         k, n = info.loc[('tissue', name)].iloc[0]
         lines.append(f'{latex_name(name)} & {int(k)} & {int(n)} & ' + ' & '.join(f3(row[m]) for m, _ in methods) + r' \\')
-    lines += [r'\midrule', r'Mean & & & ' + ' & '.join(f3(tissue[m].mean()) for m, _ in methods) + r' \\',
-              f'Controls ({len(within)} pairs) & & & ' + ' & '.join(f3(within[m].mean()) for m, _ in methods) + r' \\',
+    def gain_row(frame):
+        better = frame[['K-Means raw', 'K-Means scaled']].max(axis=1)
+        return ' & '.join(f3((frame[m] - better).mean()) if not m.startswith('K-Means') else '' for m, _ in methods)
+
+    lines += [r'\midrule', r'Mean ARI & & & ' + ' & '.join(f3(tissue[m].mean()) for m, _ in methods) + r' \\',
+              r'Mean gain & & & ' + gain_row(tissue) + r' \\', r'\addlinespace',
+              r'Controls, mean ARI & & & ' + ' & '.join(f3(within[m].mean()) for m, _ in methods) + r' \\',
+              r'Controls, mean gain & & & ' + gain_row(within) + r' \\',
               r'\bottomrule', r'\end{tabular}', r'\end{table}']
     write('gtex.tex', lines)
 
@@ -631,12 +650,12 @@ def alignment():
 
     lines = [r'\begin{table}[t]', r'\centering', r'\small',
              r'\caption{Alignment study: mean gain in ARI over the better of raw and standardized $K$-Means, pooled over the TCGA and GTEx cohorts, by the share of flipped proxy labels. Alignment is the mean adjusted mutual information between proxy and subtypes.}',
-             r'\label{tab:alignment}', r'\begin{tabular}{lcccccc}', r'\toprule',
+             r'\label{tab:alignment}', r'\begin{tabular}{lrrrrrr}', r'\toprule',
              r'\textbf{Flipped labels} & ' + ' & '.join(f'{q:.0%}'.replace('%', r'\%') for q in ami.index) + r' \\',
              r'Alignment (AMI) & ' + ' & '.join(f3(v) for v in ami.values) + r' \\', r'\midrule']
     for m, _ in methods:
         row = a2[a2.Method == m].set_index('Noise').Estimate
-        lines.append(f'{latex_name(m)} & ' + ' & '.join(f3(row[q]) for q in ami.index) + r' \\')
+        lines.append(f'{latex_name({"RFC spectral": "Spectral RFC"}.get(m, m))} & ' + ' & '.join(f3(row[q]) for q in ami.index) + r' \\')
     lines += [r'\bottomrule', r'\end{tabular}', r'\end{table}']
     write('alignment.tex', lines)
 
