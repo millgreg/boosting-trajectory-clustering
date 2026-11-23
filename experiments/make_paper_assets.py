@@ -295,7 +295,7 @@ def confirmation():
               'BTC minus UMAP raw': ('C3', 'BTC $-$ UMAP, raw', 'UMAPRaw'),
               'BTC minus UMAP scaled': ('C3', 'BTC $-$ UMAP, standardized', 'UMAPScaled')}
     lines = [r'\begin{table}[t]', r'\centering', r'\small',
-             f'\\caption{{Confirmation on {t.shape[0]} held-out OpenML datasets with random class groupings, analysed exactly as pre-specified. Differences in mean ARI with 95\\% bootstrap intervals over datasets; a difference is claimed only when the interval excludes zero. Higher and lower: the number of datasets on which the first method of the comparison scored higher or lower than the second; differences below 0.0005 count as ties and appear in neither column. Spectral RFC was added after the protocol was frozen and is exploratory.}}',
+             f'\\caption{{Confirmation on {t.shape[0]} held-out OpenML datasets with random class groupings, analyzed exactly as pre-specified. Differences in mean ARI with 95\\% bootstrap intervals over datasets; a difference is claimed only when the interval excludes zero. Higher and lower: the number of datasets on which the first method of the comparison scored higher or lower than the second; differences below 0.0005 count as ties and appear in neither column. Spectral RFC was added after the protocol was frozen and is exploratory.}}',
              r'\label{tab:confirmation}', r'\setlength{\tabcolsep}{4pt}', r'\begin{tabular}{llrr@{,\ }rrrl}', r'\toprule',
              r'\textbf{Claim} & \textbf{Comparison} & \textbf{Difference} & \multicolumn{2}{c}{\textbf{95\% CI}} & \textbf{Higher} & \textbf{Lower} & \textbf{Verdict} \\', r'\midrule']
     for _, row in s.iterrows():
