@@ -18,7 +18,7 @@ and K-Means.
 from typing import Any, Optional
 
 import numpy as np
-from scipy.sparse import csr_matrix, diags
+from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import LinearOperator, eigsh
 from sklearn.cluster import KMeans
 

@@ -575,7 +575,7 @@ def unknown_k():
     shap = d[(d.Study == 'confirmation') & (d.Method == 'TreeSHAP')]
     num('UnkConfShapMedianK', float(shap.K_chosen.median()), 1)
     conf = d[d.Study == 'confirmation']
-    num('UnkBeyond', int(conf.groupby('did').apply(lambda x: (x.K_true > x.K_max).any()).sum()))
+    num('UnkBeyond', int((conf.K_true > conf.K_max).groupby(conf.did).any().sum()))
 
 
 def gtex():
