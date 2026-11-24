@@ -37,7 +37,8 @@ def main():
     d = pd.read_csv(os.path.join(RES, 'unknown_k.csv'))
     d['exact'] = (d.K_chosen == d.K_true).astype(float)
     d['abs_error'] = (d.K_chosen - d.K_true).abs()
-    beyond = d[d.Study == 'confirmation'].groupby('did').apply(lambda x: (x.K_true > x.K_max).any()).sum()
+    conf = d[d.Study == 'confirmation']
+    beyond = (conf.K_true > conf.K_max).groupby(conf.did).any().sum()
     print('Confirmation datasets with true K beyond the candidate range:', int(beyond))
     u = units(d)
     rows = []

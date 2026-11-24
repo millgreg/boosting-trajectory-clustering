@@ -237,7 +237,7 @@ def shap_setups():
     num('ShapDevDiff', x.mean()); ci('ShapDevDiff', *bootstrap(x))
     num('ShapDevBest', t[best].mean())
     lines = [r'\begin{table}[ht]', r'\centering', r'\small',
-             f'\\caption{{TreeSHAP clustering setups on the 13 development benchmarks (10 seeds), ranked by mean ARI. The best setup was frozen as the TreeSHAP comparator for confirmation; BTC scored {f3(t["BTC"].mean())}.}}',
+             f'\\caption{{TreeSHAP clustering setups on the 13 development benchmarks (10 seeds; 5 for the setups clustered with UMAP), ranked by mean ARI. The best setup was frozen as the TreeSHAP comparator for confirmation; BTC scored {f3(t["BTC"].mean())}.}}',
              r'\label{tab:shap}', r'\begin{tabular}{cclr}', r'\toprule',
              r'\textbf{Tree depth} & \textbf{Column subsampling} & \textbf{Clustering} & \textbf{Mean ARI} \\', r'\midrule']
     for m, v in t.drop(columns='BTC').mean().sort_values(ascending=False).items():
@@ -258,12 +258,16 @@ def homogeneity():
 
 
 def proxy_contrast():
+    # The plan names BTC and the RF leaf embedding, each against raw and standardized K-Means.
     c = pd.read_csv(os.path.join(RES, 'proxy_contrast.csv'))
-    c['gain'] = c['BTC'] - c['K-Means scaled']
-    u = c.groupby(['Dataset', 'Proxy', 'grouping']).gain.mean().groupby(['Dataset', 'Proxy']).mean().unstack()
     primary = ['arrhythmia', 'ctg', 'har', 'leukemia', 'mice', 'paul15', 'thyroid']
-    x = (u.real - u.random).loc[primary]
-    num('DevContrast', x.mean()); ci('DevContrast', *bootstrap(x))
+    for method, base, name in [('BTC', 'K-Means scaled', 'DevContrast'), ('BTC', 'K-Means raw', 'DevContrastBTCRaw'),
+                               ('RF leaves with SVD', 'K-Means scaled', 'DevContrastRFScaled'),
+                               ('RF leaves with SVD', 'K-Means raw', 'DevContrastRFRaw')]:
+        c['gain'] = c[method] - c[base]
+        u = c.groupby(['Dataset', 'Proxy', 'grouping']).gain.mean().groupby(['Dataset', 'Proxy']).mean().unstack()
+        x = (u.real - u.random).loc[primary]
+        num(name, x.mean()); ci(name, *bootstrap(x))
 
 
 # ---------------------------------------------------------------- confirmation
