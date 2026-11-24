@@ -46,7 +46,7 @@ def main():
             cohorts = part.Cohort.unique()
             rng = np.random.RandomState(0)
             draws = []
-            for _ in range(2000):
+            for _ in range(20000):
                 pick = rng.choice(cohorts, len(cohorts))
                 sample = pd.concat([part[part.Cohort == c] for c in pick])
                 draws.append(spearmanr(sample.Alignment, sample[m]).statistic)
