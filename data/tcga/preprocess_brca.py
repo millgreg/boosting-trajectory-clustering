@@ -1,10 +1,13 @@
 import os
-import gzip
 import pickle
+import sys
 import urllib.request
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from checksums import verify
 
 def download_file(url, filepath):
     if not os.path.exists(filepath):
@@ -23,10 +26,11 @@ def main():
     
     download_file(expr_url, expr_path)
     download_file(clin_url, clin_path)
-    
+    verify(['tcga/HiSeqV2.gz', 'tcga/BRCA_clinicalMatrix'])
+
     print("Loading clinical data...")
     clin_df = pd.read_csv(clin_path, sep='\t')
-    
+
     # Binary proxy task: ER Status
     clin_df['y'] = clin_df['breast_carcinoma_estrogen_receptor_status'].map({'Positive': 1, 'Negative': 0})
     

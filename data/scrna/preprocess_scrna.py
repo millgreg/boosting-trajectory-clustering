@@ -1,8 +1,6 @@
 import os
-import sys
 import pickle
 import numpy as np
-import pandas as pd
 import scanpy as sc
 
 def load_and_preprocess():

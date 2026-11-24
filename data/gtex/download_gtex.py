@@ -4,9 +4,12 @@ Expression (RSEM gene TPM, about 546 MB) and tissue labels come from the public 
 donor and sample attributes from the public GTEx v8 annotation files. The study builds a
 2,000-gene cache from these files on first use.
 """
-import gzip
 import os
+import sys
 import urllib.request
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from checksums import verify
 
 XENA = 'https://toil-xena-hub.s3.us-east-1.amazonaws.com/download/'
 GTEX = 'https://storage.googleapis.com/adult-gtex/annotations/v8/metadata-files/'
@@ -27,10 +30,7 @@ def main():
             continue
         print(f'Downloading {local}...')
         urllib.request.urlretrieve(url, path)
-    with gzip.open(os.path.join(here, 'gtex_RSEM_gene_tpm.gz')) as f:
-        while f.read(1 << 24):
-            pass
-    print('Expression archive verified.')
+    verify(['gtex/' + local for local in FILES])
 
 
 if __name__ == '__main__':

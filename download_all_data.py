@@ -19,12 +19,14 @@ def main():
         os.path.join(data_dir, 'diabetes', 'preprocess_diabetes.py'),
         os.path.join(data_dir, 'scrna', 'preprocess_scrna.py'),
         os.path.join(data_dir, 'tcga', 'preprocess_brca.py'),
-        os.path.join(data_dir, 'tcga_gbmlgg', 'preprocess_gbmlgg.py')
+        os.path.join(data_dir, 'tcga_gbmlgg', 'preprocess_gbmlgg.py'),
+        os.path.join(data_dir, 'tcga_pancan', 'download_pancan.py'),
+        os.path.join(data_dir, 'gtex', 'download_gtex.py')
     ]
-    
-    print("This script will download and preprocess all required datasets for the BTC benchmarks.")
-    print("Standard benchmark datasets (e.g., Dermatology, Vehicle, Thyroid) are fetched on-the-fly via OpenML during runtime.")
-    print("This script prepares the complex medical and biological datasets.\n")
+
+    print("This script downloads and prepares all local datasets: the development benchmarks, TCGA PanCanAtlas, and GTEx.")
+    print("The other OpenML datasets (e.g., Dermatology, Vehicle, Thyroid, and the confirmation datasets) are fetched by ID at runtime.")
+    print("Downloaded TCGA and GTEx files are checked against data/checksums.sha256.\n")
     
     for script in scripts:
         if os.path.exists(script):
@@ -32,7 +34,7 @@ def main():
         else:
             print(f"Warning: Could not find script {script}")
             
-    print("\nAll medical datasets have been successfully downloaded and preprocessed!")
+    print("\nAll local datasets have been downloaded and prepared.")
     print("You are now ready to run reproduce.ps1 or reproduce.sh.")
 
 if __name__ == '__main__':

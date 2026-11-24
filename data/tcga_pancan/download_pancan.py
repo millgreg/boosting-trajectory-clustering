@@ -3,9 +3,12 @@
 Files come from the public UCSC Xena PanCanAtlas hub. The expression matrix is about 331 MB.
 The studies build a 2,000-gene cache from these files on first use.
 """
-import gzip
 import os
+import sys
 import urllib.request
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from checksums import verify
 
 BASE = 'https://tcga-pancan-atlas-hub.s3.us-east-1.amazonaws.com/download/'
 FILES = {
@@ -24,10 +27,7 @@ def main():
             continue
         print(f'Downloading {local}...')
         urllib.request.urlretrieve(BASE + remote, path)
-    with gzip.open(os.path.join(here, 'EB_AdjustPANCAN_geneExp.xena.gz')) as f:
-        while f.read(1 << 24):
-            pass
-    print('Expression archive verified.')
+    verify(['tcga_pancan/' + local for local in FILES])
 
 
 if __name__ == '__main__':

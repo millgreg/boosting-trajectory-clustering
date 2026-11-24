@@ -38,7 +38,7 @@ labels = BTC(booster=booster, n_clusters=4).fit_predict(X_target)
 
 `reproduce.sh` (Linux/macOS) and `reproduce.ps1` (Windows) run every step in order:
 
-1. **Data:** `download_all_data.py` prepares the local biomedical benchmarks, and `data/tcga_pancan/download_pancan.py` and `data/gtex/download_gtex.py` fetch the TCGA PanCanAtlas and GTEx files. OpenML datasets download automatically.
+1. **Data:** `download_all_data.py` prepares the local development benchmarks and fetches the TCGA PanCanAtlas and GTEx files, checking the TCGA and GTEx downloads against the SHA-256 checksums in `data/checksums.sha256`. OpenML datasets download automatically by ID.
 2. **Development studies** on the 13 benchmarks and OpenML-CC18: `run_history_study.py`, `run_default_sensitivity.py`, `run_proxy_contrast.py`, and `run_dev_followups.py`.
 3. **Confirmation** on 40 held-out datasets: `run_confirmation.py`, analyzed by `analyze_confirmation.py`, plus the exploratory `run_confirmation_rfc.py`.
 4. **TCGA and GTEx studies:** `run_tcga_hierarchy.py`, `run_tcga_within_cohort.py`, and `run_gtex.py`, each with its `analyze_` script.

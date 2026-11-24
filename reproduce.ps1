@@ -11,8 +11,6 @@ function Invoke-Step([string[]]$Arguments) {
 
 Write-Host "[1/6] Data"
 Invoke-Step "download_all_data.py"
-Invoke-Step "data/tcga_pancan/download_pancan.py"
-Invoke-Step "data/gtex/download_gtex.py"
 
 Write-Host "[2/6] Development studies"
 Invoke-Step "experiments/run_history_study.py"

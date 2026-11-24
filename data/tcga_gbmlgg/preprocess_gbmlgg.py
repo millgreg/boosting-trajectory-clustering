@@ -1,10 +1,12 @@
 import os
-import gzip
-import json
 import pickle
+import sys
 import urllib.request
 import pandas as pd
 import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from checksums import verify
 
 def download_file(url, filepath):
     if not os.path.exists(filepath):
@@ -23,10 +25,11 @@ def main():
     
     download_file(expr_url, expr_path)
     download_file(clin_url, clin_path)
-    
+    verify(['tcga_gbmlgg/HiSeqV2.gz', 'tcga_gbmlgg/GBMLGG_clinicalMatrix'])
+
     print("Loading clinical data...")
     clin_df = pd.read_csv(clin_path, sep='\t')
-    
+
     # Extract relevant columns
     # vital_status: "Alive" or "Dead"
     # histological_type: "Glioblastoma Multiforme (GBM)" -> Grade IV
