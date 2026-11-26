@@ -74,7 +74,7 @@ def main():
     rho = spearmanr(h.loc[g.index], g).statistic
     draws = []
     rng = np.random.RandomState(0)
-    for _ in range(5000):
+    for _ in range(20000):
         i = rng.randint(0, len(g), len(g))
         draws.append(spearmanr(h.loc[g.index].values[i], g.values[i]).statistic)
     lo, hi = np.nanpercentile(draws, [2.5, 97.5])
