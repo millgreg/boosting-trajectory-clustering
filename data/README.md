@@ -53,6 +53,15 @@ The Diabetes benchmark is derived from the 10-year clinical database of hospital
 
 ---
 
+## Preprocessing of the Paul15 Dataset
+
+The Paul15 benchmark consists of single-cell RNA-seq profiles of mouse myeloid progenitors (Paul et al., 2015), downloaded with `scanpy.datasets.paul15()`:
+* **Proxy Task:** Erythroid cells (clusters 1Ery to 6Ery, $y=1$) versus all other cells ($y=0$).
+* **Normalization** (`experiments/dataset_loader.py`): The counts of each cell are divided by its total count, scaled to the median total count, and log-transformed with $\log(1 + x)$.
+* **Dimension Reduction:** A 50-component truncated SVD (`random_state=42`) is fitted on all 2,730 cells without using labels. The 1,095 erythroid cells of the target cohort are taken from this 50-dimensional representation.
+
+---
+
 ## Directory Organization
 
 ```
